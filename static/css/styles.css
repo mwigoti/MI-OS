@@ -1,0 +1,11 @@
+/* MwohaOS Custom Static Stylesheet */
+:root {
+  --color-primary: #2563eb;
+  --color-surface: #0f172a;
+}
+
+/* Subtle focus ring style */
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}

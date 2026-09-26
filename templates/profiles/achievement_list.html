@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Achievements — MwohaOS{% endblock %}
+{% block header_title %}Awards & Achievements{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold text-slate-900">Awards & Honors</h1>
+      <p class="text-xs text-slate-500">Hackathon wins, honors, fellowships, and recognitions.</p>
+    </div>
+    <a href="{% url 'profiles:achievement_create' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 shadow-sm">
+      + Add Achievement
+    </a>
+  </div>
+
+  <div class="space-y-4">
+    {% for ach in achievements %}
+    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">{{ ach.title }}</h2>
+          <p class="text-sm font-semibold text-blue-600">{{ ach.organization }}</p>
+          {% if ach.date %}<span class="text-xs text-slate-400 font-mono">{{ ach.date|date:"F Y" }}</span>{% endif %}
+        </div>
+        <div class="flex items-center space-x-2 text-xs">
+          <a href="{% url 'profiles:achievement_edit' ach.pk %}" class="px-3 py-1.5 border border-slate-200 rounded text-slate-700 hover:bg-slate-50">Edit</a>
+          <form action="{% url 'profiles:achievement_delete' ach.pk %}" method="post" onsubmit="return confirm('Delete achievement?');">
+            {% csrf_token %}
+            <button type="submit" class="px-3 py-1.5 border border-rose-200 text-rose-600 rounded hover:bg-rose-50">Delete</button>
+          </form>
+        </div>
+      </div>
+      {% if ach.description %}
+      <p class="mt-3 text-xs text-slate-600 border-t border-slate-100 pt-3">{{ ach.description }}</p>
+      {% endif %}
+      {% if ach.url %}
+      <div class="mt-2 text-xs">
+        <a href="{{ ach.url }}" target="_blank" rel="noopener" class="text-blue-600 hover:underline">Verification Link &rarr;</a>
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-400 italic">
+      No achievements recorded yet.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

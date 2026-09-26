@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Documents Vault — MwohaOS{% endblock %}
+{% block header_title %}Document Vault{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-slate-900">Professional Documents Vault</h1>
+      <p class="text-xs text-slate-500">Secure, isolated storage for CVs, resumes, transcripts, and verified certificates.</p>
+    </div>
+    <a href="{% url 'documents:upload' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 shadow-sm">
+      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+      Upload Document
+    </a>
+  </div>
+
+  <!-- Search & Type Filter -->
+  <div class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+    <form method="get" class="flex flex-wrap items-center gap-4 text-xs">
+      <div class="flex-1 min-w-[200px]">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search document titles..." class="w-full rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+      </div>
+      <div>
+        <select name="type" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500" onchange="this.form.submit()">
+          <option value="">All Document Types</option>
+          {% for type_val, type_lbl in doc_types %}
+          <option value="{{ type_val }}" {% if selected_type == type_val %}selected{% endif %}>{{ type_lbl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="px-3 py-2 bg-slate-800 text-white rounded-md font-medium hover:bg-slate-900">Search</button>
+      {% if query or selected_type %}
+      <a href="{% url 'documents:list' %}" class="text-slate-500 hover:text-slate-700 underline">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Documents Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    {% for doc in documents %}
+    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:border-slate-300 transition">
+      <div>
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-8 h-8 rounded bg-blue-50 text-blue-700 font-mono font-bold text-xs flex items-center justify-center border border-blue-200">
+              {{ doc.file_extension|default:"DOC" }}
+            </span>
+            <div>
+              <h2 class="text-sm font-bold text-slate-900 truncate max-w-[170px]" title="{{ doc.title }}">{{ doc.title }}</h2>
+              <span class="text-[10px] text-slate-500 font-mono">v{{ doc.version }}</span>
+            </div>
+          </div>
+          {% if doc.is_primary %}
+          <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-mono font-medium">PRIMARY</span>
+          {% endif %}
+        </div>
+
+        <div class="mt-3 text-xs text-slate-500 space-y-1">
+          <span class="block text-slate-700 font-medium">{{ doc.get_document_type_display }}</span>
+          <span class="block text-[11px] font-mono text-slate-400">Size: {{ doc.file_size_display }} • Uploaded: {{ doc.created_at|date:"Y-m-d" }}</span>
+        </div>
+
+        {% if doc.description %}
+        <p class="mt-2.5 text-xs text-slate-600 line-clamp-2">{{ doc.description }}</p>
+        {% endif %}
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+        <a href="{% url 'documents:download' doc.pk %}" class="inline-flex items-center text-blue-600 hover:underline font-medium">
+          <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Download
+        </a>
+
+        <form action="{% url 'documents:delete' doc.pk %}" method="post" onsubmit="return confirm('Permanently delete document {{ doc.title }}?');">
+          {% csrf_token %}
+          <button type="submit" class="text-rose-600 hover:underline text-xs">Delete</button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-span-3 bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-400 italic">
+      No documents found in vault. Click "Upload Document" to upload a CV, certification, or transcript.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

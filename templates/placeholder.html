@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block header_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+  <div class="bg-white border border-slate-200 rounded-lg p-8 shadow-sm text-center">
+    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-600 mb-4">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+
+    <div class="inline-block px-2.5 py-0.5 mb-2 text-xs font-mono font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-full">
+      {{ milestone }} Roadmap Item
+    </div>
+
+    <h1 class="text-xl font-bold text-slate-900 tracking-tight">{{ title }}</h1>
+    <p class="mt-2 text-sm text-slate-600 max-w-lg mx-auto">
+      {{ description }}
+    </p>
+
+    <div class="mt-6 pt-6 border-t border-slate-100 text-left max-w-md mx-auto">
+      <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">Planned Features</h3>
+      <ul class="space-y-2 text-xs text-slate-700">
+        {% for feature in upcoming_features %}
+        <li class="flex items-start">
+          <span class="text-slate-400 mr-2">•</span>
+          <span>{{ feature }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="mt-8">
+      <a href="{% url 'core:dashboard' %}" 
+         class="inline-flex items-center px-4 py-2 border border-slate-300 shadow-sm text-xs font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 transition">
+        ← Return to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

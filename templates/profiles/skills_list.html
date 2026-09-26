@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Skills — MwohaOS{% endblock %}
+{% block header_title %}Professional Skills{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold text-slate-900">Skills Inventory</h1>
+      <p class="text-xs text-slate-500">Document your technical, domain, and research proficiencies.</p>
+    </div>
+    <a href="{% url 'profiles:skill_create' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 shadow-sm">
+      + Add Skill
+    </a>
+  </div>
+
+  <div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+    <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+      <thead class="bg-slate-50 font-semibold text-slate-700">
+        <tr>
+          <th class="px-6 py-3.5">Skill Name</th>
+          <th class="px-6 py-3.5">Category</th>
+          <th class="px-6 py-3.5">Proficiency</th>
+          <th class="px-6 py-3.5">Experience</th>
+          <th class="px-6 py-3.5 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-200 bg-white">
+        {% for skill in skills %}
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-6 py-4 font-semibold text-slate-900">
+            {{ skill.name }}
+            {% if skill.description %}
+            <span class="block text-[11px] font-normal text-slate-500 mt-0.5">{{ skill.description }}</span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-4 text-slate-600 font-mono text-[11px]">{{ skill.get_category_display }}</td>
+          <td class="px-6 py-4">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-medium {% if skill.proficiency == 'EXPERT' %}bg-purple-100 text-purple-800{% elif skill.proficiency == 'ADVANCED' %}bg-blue-100 text-blue-800{% elif skill.proficiency == 'INTERMEDIATE' %}bg-emerald-100 text-emerald-800{% else %}bg-slate-100 text-slate-700{% endif %}">
+              {{ skill.get_proficiency_display }}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-slate-600 font-mono">
+            {% if skill.years_experience %}{{ skill.years_experience }} yrs{% else %}—{% endif %}
+          </td>
+          <td class="px-6 py-4 text-right space-x-2">
+            <a href="{% url 'profiles:skill_edit' skill.pk %}" class="text-blue-600 hover:underline">Edit</a>
+            <form action="{% url 'profiles:skill_delete' skill.pk %}" method="post" class="inline" onsubmit="return confirm('Delete skill {{ skill.name }}?');">
+              {% csrf_token %}
+              <button type="submit" class="text-rose-600 hover:underline">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-6 py-8 text-center text-slate-400 italic">
+            No skills added yet. Click "+ Add Skill" to start cataloging your competencies.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

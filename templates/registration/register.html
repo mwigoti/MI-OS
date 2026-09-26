@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account{% endblock %}
+
+{% block unauth_content %}
+<div class="sm:mx-auto sm:w-full sm:max-w-md">
+  <div class="text-center">
+    <div class="inline-flex items-center space-x-2 text-white font-bold tracking-tight text-2xl">
+      <span class="inline-block w-4 h-4 bg-blue-500 rounded-sm"></span>
+      <span>MwohaOS</span>
+    </div>
+    <h2 class="mt-2 text-sm text-slate-400">
+      Initialize your personal opportunity operating workspace
+    </h2>
+  </div>
+
+  <div class="mt-8 bg-slate-800/80 border border-slate-700/80 py-8 px-6 shadow-xl rounded-lg sm:px-10">
+    <div class="mb-6 pb-4 border-b border-slate-700">
+      <h3 class="text-lg font-semibold text-white">Create an Account</h3>
+      <p class="text-xs text-slate-400 mt-1">Setup your username and password.</p>
+    </div>
+
+    {% if form.errors %}
+    <div class="mb-4 p-3 rounded bg-rose-950/60 border border-rose-800 text-rose-300 text-xs space-y-1">
+      {% for field in form %}
+        {% for error in field.errors %}
+          <p><span class="font-semibold">{{ field.label }}:</span> {{ error }}</p>
+        {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'accounts:register' %}" class="space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label for="id_username" class="block text-xs font-medium text-slate-300 mb-1">Username</label>
+        <input type="text" name="username" required id="id_username" 
+               class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <div>
+        <label for="id_email" class="block text-xs font-medium text-slate-300 mb-1">Email</label>
+        <input type="email" name="email" required id="id_email" 
+               class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <div>
+        <label for="id_password1" class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+        <input type="password" name="password1" required id="id_password1" 
+               class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <div>
+        <label for="id_password2" class="block text-xs font-medium text-slate-300 mb-1">Confirm Password</label>
+        <input type="password" name="password2" required id="id_password2" 
+               class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-md text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+      </div>
+
+      <div class="pt-2">
+        <button type="submit" 
+                class="w-full py-2.5 px-4 border border-transparent rounded-md text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition shadow">
+          Create Account
+        </button>
+      </div>
+    </form>
+
+    <div class="mt-6 pt-6 border-t border-slate-700/60 text-center">
+      <p class="text-xs text-slate-400">
+        Already registered?
+        <a href="{% url 'accounts:login' %}" class="font-medium text-blue-400 hover:text-blue-300 ml-1">
+          Sign in
+        </a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

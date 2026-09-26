@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+  <!-- Header / Greeting -->
+  <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+    <h1 class="text-2xl font-bold tracking-tight text-slate-900">MwohaOS</h1>
+    <p class="mt-1 text-sm text-slate-600">
+      Welcome, <span class="font-semibold text-slate-900">{{ user.username }}</span>.
+    </p>
+    <p class="mt-2 text-xs text-slate-500 font-mono">
+      Personal opportunity intelligence and execution platform — Foundation active.
+    </p>
+  </div>
+
+  <!-- System Status (Section 7) -->
+  <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+    <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+      <div>
+        <h2 class="text-base font-semibold text-slate-900">System Status</h2>
+        <p class="text-xs text-slate-500">Milestone 0 core infrastructure health</p>
+      </div>
+      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+        Operational
+      </span>
+    </div>
+
+    <ul class="mt-4 divide-y divide-slate-100 text-sm">
+      <li class="py-2.5 flex items-center justify-between">
+        <span class="text-slate-700 font-medium">Web application</span>
+        <span class="inline-flex items-center text-emerald-600 font-medium text-xs">
+          <svg class="w-4 h-4 mr-1 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          ✓ Active
+        </span>
+      </li>
+
+      <li class="py-2.5 flex items-center justify-between">
+        <span class="text-slate-700 font-medium">Database (PostgreSQL)</span>
+        {% if system_status.database %}
+        <span class="inline-flex items-center text-emerald-600 font-medium text-xs">
+          <svg class="w-4 h-4 mr-1 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          ✓ Connected
+        </span>
+        {% else %}
+        <span class="inline-flex items-center text-amber-600 font-medium text-xs">
+          ⚠ Initializing
+        </span>
+        {% endif %}
+      </li>
+
+      <li class="py-2.5 flex items-center justify-between">
+        <span class="text-slate-700 font-medium">Redis</span>
+        {% if system_status.redis %}
+        <span class="inline-flex items-center text-emerald-600 font-medium text-xs">
+          <svg class="w-4 h-4 mr-1 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          ✓ Connected
+        </span>
+        {% else %}
+        <span class="inline-flex items-center text-slate-500 font-medium text-xs">
+          ✓ Configured
+        </span>
+        {% endif %}
+      </li>
+
+      <li class="py-2.5 flex items-center justify-between">
+        <span class="text-slate-700 font-medium">Celery</span>
+        <span class="inline-flex items-center text-emerald-600 font-medium text-xs">
+          <svg class="w-4 h-4 mr-1 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          ✓ Ready
+        </span>
+      </li>
+
+      <li class="py-2.5 flex items-center justify-between">
+        <span class="text-slate-700 font-medium">Celery Beat</span>
+        <span class="inline-flex items-center text-emerald-600 font-medium text-xs">
+          <svg class="w-4 h-4 mr-1 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          ✓ Ready
+        </span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Coming Soon (Section 7) -->
+  <div class="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+    <div class="pb-3 border-b border-slate-100 mb-4">
+      <h2 class="text-base font-semibold text-slate-900">Coming Soon</h2>
+      <p class="text-xs text-slate-500">Planned feature pipeline scheduled across upcoming milestones</p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3">
+      {% for item in coming_soon %}
+      <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-md flex items-start justify-between">
+        <div>
+          <h3 class="text-sm font-semibold text-slate-900">{{ item.title }}</h3>
+          <p class="text-xs text-slate-600 mt-0.5">{{ item.description }}</p>
+        </div>
+        <span class="ml-4 flex-shrink-0 px-2 py-0.5 text-[10px] font-mono font-medium uppercase bg-slate-200 text-slate-700 rounded">
+          {{ item.milestone }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — MwohaOS{% endblock %}
+{% block header_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto space-y-6">
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+    <div class="border-b border-slate-100 pb-3 mb-5">
+      <h1 class="text-lg font-bold text-slate-900">{{ title }}</h1>
+      <p class="text-xs text-slate-500">Add spoken or written language fluency.</p>
+    </div>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Language *</label>
+        {{ form.language }}
+        {% if form.language.errors %}<span class="text-rose-600 text-xs">{{ form.language.errors }}</span>{% endif %}
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Proficiency Level *</label>
+        {{ form.proficiency }}
+      </div>
+
+      <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+        <a href="{% url 'profiles:language_list' %}" class="px-4 py-2 border border-slate-300 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-50">Cancel</a>
+        <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 shadow-sm">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Languages — MwohaOS{% endblock %}
+{% block header_title %}Language Competencies{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold text-slate-900">Languages</h1>
+      <p class="text-xs text-slate-500">Record language proficiencies and working capacity.</p>
+    </div>
+    <a href="{% url 'profiles:language_create' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 shadow-sm">
+      + Add Language
+    </a>
+  </div>
+
+  <div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+    <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+      <thead class="bg-slate-50 font-semibold text-slate-700">
+        <tr>
+          <th class="px-6 py-3.5">Language</th>
+          <th class="px-6 py-3.5">Proficiency</th>
+          <th class="px-6 py-3.5 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-200 bg-white">
+        {% for lang in languages %}
+        <tr class="hover:bg-slate-50 transition">
+          <td class="px-6 py-4 font-semibold text-slate-900">{{ lang.language }}</td>
+          <td class="px-6 py-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-mono bg-blue-50 text-blue-700 font-medium">
+              {{ lang.get_proficiency_display }}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-right space-x-2">
+            <a href="{% url 'profiles:language_edit' lang.pk %}" class="text-blue-600 hover:underline">Edit</a>
+            <form action="{% url 'profiles:language_delete' lang.pk %}" method="post" class="inline" onsubmit="return confirm('Delete language?');">
+              {% csrf_token %}
+              <button type="submit" class="text-rose-600 hover:underline">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="px-6 py-8 text-center text-slate-400 italic">No languages recorded yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

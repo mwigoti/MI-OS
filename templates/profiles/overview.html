@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Professional Profile — MwohaOS{% endblock %}
+{% block header_title %}Professional Profile{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Top Hero & Identity Card -->
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+    <div class="flex flex-col md:flex-row md:items-start justify-between gap-6">
+      <div class="space-y-3 max-w-3xl">
+        <div class="flex items-center space-x-3">
+          <div class="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl uppercase tracking-wider shadow-inner">
+            {{ user.username|slice:":2" }}
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ user.get_full_name|default:user.username }}</h1>
+            <p class="text-sm font-medium text-blue-600">{{ profile.headline|default:"Professional Headline Not Set" }}</p>
+          </div>
+        </div>
+
+        {% if profile.professional_summary %}
+        <p class="text-sm text-slate-600 leading-relaxed pt-1">
+          {{ profile.professional_summary }}
+        </p>
+        {% else %}
+        <p class="text-sm text-slate-400 italic">No professional summary added yet. Outline your technical and career focus.</p>
+        {% endif %}
+
+        <!-- Metadata Badges -->
+        <div class="flex flex-wrap gap-2 pt-2 text-xs">
+          {% if profile.location or profile.country %}
+          <span class="inline-flex items-center px-2.5 py-1 rounded bg-slate-100 text-slate-700 font-medium">
+            <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            {{ profile.location|default:profile.country }}
+          </span>
+          {% endif %}
+
+          <span class="inline-flex items-center px-2.5 py-1 rounded bg-blue-50 text-blue-700 font-medium border border-blue-200">
+            Work Mode: {{ profile.get_remote_preference_display }}
+          </span>
+
+          <span class="inline-flex items-center px-2.5 py-1 rounded bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
+            {{ profile.get_availability_display }}
+          </span>
+
+          {% if profile.work_authorization %}
+          <span class="inline-flex items-center px-2.5 py-1 rounded bg-purple-50 text-purple-700 font-medium border border-purple-200">
+            Auth: {{ profile.work_authorization }}
+          </span>
+          {% endif %}
+        </div>
+
+        <!-- Links -->
+        <div class="flex flex-wrap gap-4 pt-3 text-xs text-slate-600">
+          {% if profile.linkedin_url %}
+          <a href="{{ profile.linkedin_url }}" target="_blank" rel="noopener" class="text-blue-600 hover:underline flex items-center">
+            LinkedIn &rarr;
+          </a>
+          {% endif %}
+          {% if profile.github_url %}
+          <a href="{{ profile.github_url }}" target="_blank" rel="noopener" class="text-blue-600 hover:underline flex items-center">
+            GitHub &rarr;
+          </a>
+          {% endif %}
+          {% if profile.portfolio_url %}
+          <a href="{{ profile.portfolio_url }}" target="_blank" rel="noopener" class="text-blue-600 hover:underline flex items-center">
+            Portfolio &rarr;
+          </a>
+          {% endif %}
+          {% if profile.personal_website_url %}
+          <a href="{{ profile.personal_website_url }}" target="_blank" rel="noopener" class="text-blue-600 hover:underline flex items-center">
+            Website &rarr;
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <a href="{% url 'profiles:edit' %}" class="inline-flex items-center justify-center px-4 py-2 border border-slate-300 shadow-sm text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 transition">
+          <svg class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+          Edit Profile
+        </a>
+        <a href="{% url 'documents:upload' %}" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 shadow-sm transition">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Upload Document
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Completeness Diagnostic (Deterministic Section 18) -->
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+    <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+      <div>
+        <h2 class="text-base font-semibold text-slate-900">Deterministic Profile Completeness</h2>
+        <p class="text-xs text-slate-500">Evaluates documented facts across 10 structured dimensions.</p>
+      </div>
+      <div class="text-right">
+        <span class="text-2xl font-bold font-mono {% if completeness.overall >= 80 %}text-emerald-600{% elif completeness.overall >= 50 %}text-blue-600{% else %}text-amber-600{% endif %}">
+          {{ completeness.overall }}%
+        </span>
+        <span class="block text-[11px] text-slate-400">weighted score</span>
+      </div>
+    </div>
+
+    <div class="w-full bg-slate-100 rounded-full h-2.5 my-4 overflow-hidden">
+      <div class="h-2.5 rounded-full {% if completeness.overall >= 80 %}bg-emerald-500{% elif completeness.overall >= 50 %}bg-blue-500{% else %}bg-amber-500{% endif %}" style="width: {{ completeness.overall }}%"></div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2 text-xs">
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100">
+        <span class="block text-slate-500 font-medium">Skills</span>
+        <span class="font-bold text-slate-900 font-mono text-sm">{{ completeness.sections.skills }}%</span>
+        <span class="block text-[10px] text-slate-400">{{ completeness.stats.skill_count }} recorded</span>
+      </div>
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100">
+        <span class="block text-slate-500 font-medium">Experience</span>
+        <span class="font-bold text-slate-900 font-mono text-sm">{{ completeness.sections.experience }}%</span>
+        <span class="block text-[10px] text-slate-400">{{ completeness.stats.experience_count }} roles</span>
+      </div>
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100">
+        <span class="block text-slate-500 font-medium">Education</span>
+        <span class="font-bold text-slate-900 font-mono text-sm">{{ completeness.sections.education }}%</span>
+        <span class="block text-[10px] text-slate-400">{{ completeness.stats.education_count }} degrees</span>
+      </div>
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100">
+        <span class="block text-slate-500 font-medium">Projects</span>
+        <span class="font-bold text-slate-900 font-mono text-sm">{{ completeness.sections.projects }}%</span>
+        <span class="block text-[10px] text-slate-400">{{ completeness.stats.project_count }} projects</span>
+      </div>
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100">
+        <span class="block text-slate-500 font-medium">Evidence Bank</span>
+        <span class="font-bold text-slate-900 font-mono text-sm">{{ completeness.sections.evidence }}%</span>
+        <span class="block text-[10px] text-emerald-600 font-medium">{{ completeness.stats.verified_evidence_count }} verified</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Domain Navigation Tabs -->
+  <div class="border-b border-slate-200">
+    <nav class="-mb-px flex space-x-6 overflow-x-auto text-sm font-medium">
+      <a href="{% url 'profiles:overview' %}" class="border-b-2 border-blue-600 pb-3 px-1 text-blue-600 font-semibold">Overview</a>
+      <a href="{% url 'profiles:experience_list' %}" class="border-b-2 border-transparent pb-3 px-1 text-slate-500 hover:text-slate-700 hover:border-slate-300">Experience ({{ profile.experiences.count }})</a>
+      <a href="{% url 'profiles:education_list' %}" class="border-b-2 border-transparent pb-3 px-1 text-slate-500 hover:text-slate-700 hover:border-slate-300">Education ({{ profile.education.count }})</a>
+      <a href="{% url 'profiles:skill_list' %}" class="border-b-2 border-transparent pb-3 px-1 text-slate-500 hover:text-slate-700 hover:border-slate-300">Skills ({{ profile.skills.count }})</a>
+      <a href="{% url 'profiles:project_list' %}" class="border-b-2 border-transparent pb-3 px-1 text-slate-500 hover:text-slate-700 hover:border-slate-300">Projects ({{ profile.projects.count }})</a>
+      <a href="{% url 'profiles:evidence_list' %}" class="border-b-2 border-transparent pb-3 px-1 text-slate-500 hover:text-slate-700 hover:border-slate-300">Evidence ({{ profile.evidence_items.count }})</a>
+      <a href="{% url 'documents:list' %}" class="border-b-2 border-transparent pb-3 px-1 text-slate-500 hover:text-slate-700 hover:border-slate-300">Documents ({{ profile.documents.count }})</a>
+      <a href="{% url 'profiles:preferences' %}" class="border-b-2 border-transparent pb-3 px-1 text-slate-500 hover:text-slate-700 hover:border-slate-300">Preferences</a>
+    </nav>
+  </div>
+
+  <!-- Two Column Layout: Quick Cards -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Skills Snapshot -->
+    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Top Skills</h3>
+        <a href="{% url 'profiles:skill_create' %}" class="text-xs text-blue-600 hover:underline font-medium">+ Add Skill</a>
+      </div>
+      <div class="mt-4 flex flex-wrap gap-2">
+        {% for skill in skills %}
+        <span class="inline-flex items-center px-2.5 py-1 rounded text-xs bg-slate-100 text-slate-800 border border-slate-200">
+          <span class="font-medium mr-1.5">{{ skill.name }}</span>
+          <span class="text-[10px] text-slate-500 font-mono">{{ skill.get_proficiency_display }}</span>
+        </span>
+        {% empty %}
+        <p class="text-xs text-slate-400 italic">No skills recorded yet.</p>
+        {% endfor %}
+      </div>
+      <div class="mt-4 pt-3 border-t border-slate-100 text-right">
+        <a href="{% url 'profiles:skill_list' %}" class="text-xs text-blue-600 hover:underline">Manage all skills &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Evidence Bank Snapshot -->
+    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Evidence Bank</h3>
+        <a href="{% url 'profiles:evidence_create' %}" class="text-xs text-blue-600 hover:underline font-medium">+ Add Proof</a>
+      </div>
+      <div class="mt-4 space-y-2.5">
+        {% for item in evidence_items %}
+        <div class="flex items-start justify-between text-xs p-2 rounded bg-slate-50 border border-slate-100">
+          <div>
+            <span class="font-medium text-slate-800 block">{{ item.title }}</span>
+            <span class="text-[10px] text-slate-500">{{ item.get_evidence_type_display }}</span>
+          </div>
+          {% if item.verified %}
+          <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-mono font-medium">VERIFIED</span>
+          {% else %}
+          <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-600 text-[10px] font-mono">UNVERIFIED</span>
+          {% endif %}
+        </div>
+        {% empty %}
+        <p class="text-xs text-slate-400 italic">No evidence recorded yet.</p>
+        {% endfor %}
+      </div>
+      <div class="mt-4 pt-3 border-t border-slate-100 text-right">
+        <a href="{% url 'profiles:evidence_list' %}" class="text-xs text-blue-600 hover:underline">Open Evidence Bank &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Recent Experience -->
+    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Experience</h3>
+        <a href="{% url 'profiles:experience_create' %}" class="text-xs text-blue-600 hover:underline font-medium">+ Add Experience</a>
+      </div>
+      <div class="mt-4 space-y-3">
+        {% for exp in experiences %}
+        <div class="text-xs">
+          <div class="flex justify-between items-baseline">
+            <span class="font-bold text-slate-800">{{ exp.position }}</span>
+            <span class="text-slate-400 font-mono text-[10px]">{{ exp.start_date|date:"Y" }} – {% if exp.is_current %}Present{% else %}{{ exp.end_date|date:"Y" }}{% endif %}</span>
+          </div>
+          <span class="text-slate-600 block">{{ exp.organization }} • {{ exp.location }}</span>
+        </div>
+        {% empty %}
+        <p class="text-xs text-slate-400 italic">No experience records yet.</p>
+        {% endfor %}
+      </div>
+      <div class="mt-4 pt-3 border-t border-slate-100 text-right">
+        <a href="{% url 'profiles:experience_list' %}" class="text-xs text-blue-600 hover:underline">View all experience &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Tangible Projects -->
+    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Featured Projects</h3>
+        <a href="{% url 'profiles:project_create' %}" class="text-xs text-blue-600 hover:underline font-medium">+ Add Project</a>
+      </div>
+      <div class="mt-4 space-y-3">
+        {% for proj in projects %}
+        <div class="text-xs">
+          <div class="flex justify-between items-baseline">
+            <span class="font-bold text-slate-800">{{ proj.name }}</span>
+            <span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-mono">{{ proj.get_category_display }}</span>
+          </div>
+          <p class="text-slate-600 mt-1 line-clamp-1">{{ proj.description }}</p>
+        </div>
+        {% empty %}
+        <p class="text-xs text-slate-400 italic">No projects recorded yet.</p>
+        {% endfor %}
+      </div>
+      <div class="mt-4 pt-3 border-t border-slate-100 text-right">
+        <a href="{% url 'profiles:project_list' %}" class="text-xs text-blue-600 hover:underline">View all projects &rarr;</a>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

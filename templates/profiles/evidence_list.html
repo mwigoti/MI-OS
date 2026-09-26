@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Evidence Bank — MwohaOS{% endblock %}
+{% block header_title %}Evidence Bank{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-slate-900">Evidence Bank & Verification</h1>
+      <p class="text-xs text-slate-500">Every professional claim is verified against primary sources, files, and links.</p>
+    </div>
+    <a href="{% url 'profiles:evidence_create' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 shadow-sm">
+      + Add Proof / Evidence
+    </a>
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+    <form method="get" class="flex flex-wrap items-center gap-4 text-xs">
+      <div class="flex-1 min-w-[200px]">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search evidence titles or claims..." class="w-full rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+      </div>
+      <div>
+        <select name="type" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500" onchange="this.form.submit()">
+          <option value="">All Evidence Types</option>
+          {% for type_val, type_lbl in evidence_types %}
+          <option value="{{ type_val }}" {% if selected_type == type_val %}selected{% endif %}>{{ type_lbl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <input type="checkbox" name="verified" value="1" id="verified_only" {% if verified_only == '1' %}checked{% endif %} onchange="this.form.submit()" class="rounded border-slate-300 text-emerald-600">
+        <label for="verified_only" class="text-slate-700 font-medium cursor-pointer">Verified Only</label>
+      </div>
+      <button type="submit" class="px-3 py-2 bg-slate-800 text-white rounded-md font-medium hover:bg-slate-900">Filter</button>
+      {% if query or selected_type or verified_only %}
+      <a href="{% url 'profiles:evidence_list' %}" class="text-slate-500 hover:text-slate-700 underline">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Evidence List -->
+  <div class="space-y-4">
+    {% for item in evidence_items %}
+    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div class="space-y-1.5">
+          <div class="flex items-center space-x-3">
+            <h2 class="text-base font-bold text-slate-900">{{ item.title }}</h2>
+            {% if item.verified %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              <svg class="w-3 h-3 mr-1 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              VERIFIED
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono bg-slate-100 text-slate-600 border border-slate-200">
+              UNVERIFIED
+            </span>
+            {% endif %}
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono text-[10px]">{{ item.get_evidence_type_display }}</span>
+            <span>Recorded: {{ item.created_at|date:"Y-m-d" }}</span>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 text-xs">
+          <form action="{% url 'profiles:evidence_toggle_verify' item.pk %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="px-2.5 py-1.5 border rounded text-xs font-medium {% if item.verified %}border-amber-200 text-amber-700 hover:bg-amber-50{% else %}border-emerald-200 text-emerald-700 hover:bg-emerald-50{% endif %}">
+              {% if item.verified %}Mark Unverified{% else %}Mark Verified{% endif %}
+            </button>
+          </form>
+          <a href="{% url 'profiles:evidence_edit' item.pk %}" class="px-3 py-1.5 border border-slate-200 rounded text-slate-700 hover:bg-slate-50">Edit</a>
+          <form action="{% url 'profiles:evidence_delete' item.pk %}" method="post" onsubmit="return confirm('Delete evidence item {{ item.title }}?');">
+            {% csrf_token %}
+            <button type="submit" class="px-3 py-1.5 border border-rose-200 text-rose-600 rounded hover:bg-rose-50">Delete</button>
+          </form>
+        </div>
+      </div>
+
+      {% if item.claim_summary %}
+      <div class="mt-3 p-3 rounded bg-slate-50 border border-slate-100 text-xs">
+        <span class="font-bold text-slate-700 block mb-0.5">Substantiated Claim:</span>
+        <span class="text-slate-900 font-mono">"{{ item.claim_summary }}"</span>
+      </div>
+      {% endif %}
+
+      {% if item.description %}
+      <p class="mt-2 text-xs text-slate-600 leading-relaxed">{{ item.description }}</p>
+      {% endif %}
+
+      <!-- Attached Source Links & Documents -->
+      <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-4 text-xs">
+        {% if item.source_url %}
+        <a href="{{ item.source_url }}" target="_blank" rel="noopener" class="text-blue-600 hover:underline flex items-center font-medium">
+          <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          Direct Proof URL &rarr;
+        </a>
+        {% endif %}
+
+        {% if item.document %}
+        <a href="{% url 'documents:download' item.document.pk %}" class="text-slate-700 hover:text-blue-600 flex items-center font-mono text-[11px] bg-slate-100 px-2.5 py-1 rounded">
+          <svg class="w-3.5 h-3.5 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          Vault Document: {{ item.document.title }} ({{ item.document.file_extension }})
+        </a>
+        {% endif %}
+
+        {% if item.related_project %}
+        <span class="text-slate-500 text-[11px]">Linked Project: <strong class="text-slate-800">{{ item.related_project.name }}</strong></span>
+        {% endif %}
+        {% if item.related_experience %}
+        <span class="text-slate-500 text-[11px]">Linked Role: <strong class="text-slate-800">{{ item.related_experience.position }}</strong></span>
+        {% endif %}
+      </div>
+
+      {% if item.verification_notes %}
+      <div class="mt-2 text-[11px] text-slate-500 font-mono italic">
+        Audit Note: {{ item.verification_notes }}
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-lg border border-slate-200 p-8 text-center text-slate-400 italic">
+      No evidence items matching your filter. Click "+ Add Proof / Evidence" to record verifiable claims.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
