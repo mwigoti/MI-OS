@@ -26,8 +26,11 @@ urlpatterns = [
     # Documents (Milestone 1 — Document Vault & Management)
     path("documents/", include("apps.documents.urls", namespace="documents")),
 
-    # Opportunities (Foundation for Milestone 2)
+    # Opportunities (Milestone 2 & Milestone 3)
     path("opportunities/", include("apps.opportunities.urls", namespace="opportunities")),
+
+    # Matching & Recommendations (Milestone 4)
+    path("matching/", include("apps.matching.urls", namespace="matching")),
 
     # Applications (Foundation for Milestone 5)
     path("applications/", include("apps.applications.urls", namespace="applications")),

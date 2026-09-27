@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}AI Preparation Studio — {{ application.display_title }}{% endblock %}
+{% block header_title %}AI Preparation Studio (Milestone 6){% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+
+  <!-- Breadcrumbs & Quick Return -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center space-x-2 text-xs">
+      <a href="{% url 'applications:detail' application.pk %}" class="font-semibold text-blue-600 hover:text-blue-800 flex items-center">
+        &larr; Back to Workspace: {{ application.display_title|truncatechars:35 }}
+      </a>
+      <span class="text-slate-300">/</span>
+      <span class="text-slate-500 font-medium">Milestone 6: AI Preparation</span>
+    </div>
+
+    <!-- Bulk AI Prep Action -->
+    <form action="{% url 'applications:ai_prep_all' application.pk %}" method="post" class="flex items-center gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="tone" value="STAR_METHOD">
+      <button type="submit" class="px-4 py-2 bg-gradient-to-r from-blue-700 to-indigo-700 text-white rounded text-xs font-semibold hover:from-blue-800 hover:to-indigo-800 shadow-sm flex items-center space-x-1.5 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>Run Full AI Preparation (All Materials)</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- Header Banner -->
+  <div class="bg-slate-900 text-white rounded-lg p-6 border border-slate-800 shadow-md">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div class="space-y-1.5">
+        <div class="flex items-center space-x-2">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-blue-400 font-semibold bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800">
+            Ground-Truth AI Tailoring Engine
+          </span>
+          <span class="text-xs text-slate-400">• Anti-Hallucination Verified</span>
+        </div>
+        <h1 class="text-xl font-bold tracking-tight text-white">{{ application.display_title }}</h1>
+        <p class="text-xs text-slate-300">
+          Target Organization: <span class="font-semibold text-white">{{ application.display_organization }}</span>
+          {% if application.active_deadline %}
+          <span class="mx-2 text-slate-600">|</span>
+          Deadline: <span class="font-mono text-slate-200">{{ application.active_deadline|date:"M d, Y" }}</span>
+          {% endif %}
+        </p>
+      </div>
+
+      <!-- Readiness Score Gauge -->
+      <div class="bg-slate-800/80 border border-slate-700 rounded-lg p-4 text-center min-w-[160px]">
+        <div class="text-[11px] font-mono text-slate-400 uppercase tracking-wide">Workspace Readiness</div>
+        <div class="text-3xl font-bold font-mono text-white mt-1">
+          {{ application.readiness_score }}<span class="text-xs text-slate-400 font-normal">%</span>
+        </div>
+        <div class="mt-2 w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
+          <div class="h-full bg-blue-500 rounded-full" style="width: {{ application.readiness_score }}%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Preparation Studio Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Section 1: Tailored Cover Letter (Left & Center) -->
+    <div class="lg:col-span-2 space-y-6">
+
+      <!-- Cover Letter Generator Card -->
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span>1. Evidence-Grounded Cover Letter</span>
+            </h2>
+            <p class="text-xs text-slate-500">Bespoke letter synthesizing your real achievements directly against role qualifications.</p>
+          </div>
+
+          <!-- Cover Letter Trigger Form -->
+          <form action="{% url 'applications:ai_cover_letter' application.pk %}" method="post" class="flex items-center gap-2">
+            {% csrf_token %}
+            <select name="tone" class="text-xs rounded border-slate-300 py-1.5 focus:ring-blue-500">
+              <option value="PROFESSIONAL">Professional & Objective</option>
+              <option value="EXECUTIVE">Executive & Strategic</option>
+              <option value="ACADEMIC">Academic & Research</option>
+            </select>
+            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold shadow-sm flex items-center space-x-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>{% if summary.active_cl_version %}Regenerate{% else %}Generate Draft{% endif %}</span>
+            </button>
+          </form>
+        </div>
+
+        {% if summary.active_cl_version %}
+        <!-- Active Draft View -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between text-xs text-slate-500 bg-slate-50 p-2.5 rounded border border-slate-200">
+            <div class="flex items-center space-x-2">
+              <span class="font-bold text-slate-700">Active: {{ summary.active_cl_version.title }}</span>
+              <span class="text-slate-300">|</span>
+              <span class="font-mono text-slate-600">{{ summary.active_cl_version.word_count }} words</span>
+              <span class="text-slate-300">|</span>
+              <span class="text-[11px] font-mono text-slate-500">Provider: {{ summary.active_cl_version.provider }}</span>
+            </div>
+            <span class="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Attached to Workspace</span>
+          </div>
+
+          <!-- Cover Letter Content Display -->
+          <div class="bg-slate-50/50 p-5 rounded-lg border border-slate-200 text-sm leading-relaxed text-slate-800 whitespace-pre-line font-serif shadow-inner">
+{{ summary.active_cl_version.content }}
+          </div>
+
+          <!-- Grounding Citations Audit -->
+          {% if summary.active_cl_version.grounding_evidence %}
+          <div class="border-t border-slate-100 pt-3 space-y-2">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Grounding Audit (Verified Profile Facts Cited)</h4>
+            <div class="flex flex-wrap gap-1.5">
+              {% for cite in summary.active_cl_version.grounding_evidence %}
+              <span class="inline-flex items-center px-2 py-1 rounded text-[11px] font-mono bg-blue-50 text-blue-800 border border-blue-200">
+                <svg class="w-3 h-3 text-blue-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                {{ cite.evidence_type }}: {% if cite.name %}{{ cite.name }}{% elif cite.organization %}{{ cite.organization }} ({{ cite.title }}){% elif cite.title %}{{ cite.title }}{% elif cite.degree %}{{ cite.degree }}{% endif %}
+              </span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="p-8 text-center bg-slate-50 rounded-lg border border-dashed border-slate-300 space-y-2">
+          <svg class="w-8 h-8 text-slate-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <p class="text-xs font-semibold text-slate-700">No tailored cover letter draft generated yet.</p>
+          <p class="text-[11px] text-slate-500 max-w-sm mx-auto">Click "Generate Draft" to synthesize a bespoke letter based on your verified skills, experiences, and target role criteria.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Section 2: CV Tailoring & ATS Alignment -->
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+              <span>2. CV Tailoring & ATS Keyword Alignment</span>
+            </h2>
+            <p class="text-xs text-slate-500">Role-targeted executive summary, prioritized skill rankings, and enhanced experience bullets.</p>
+          </div>
+
+          <form action="{% url 'applications:ai_tailor_cv' application.pk %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold shadow-sm flex items-center space-x-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+              <span>{% if summary.cv_tailoring %}Re-Optimize CV{% else %}Optimize CV for Role{% endif %}</span>
+            </button>
+          </form>
+        </div>
+
+        {% if summary.cv_tailoring %}
+        <div class="space-y-4">
+          <!-- ATS Match Score Banner -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-0.5">
+              <div class="text-xs font-bold text-emerald-900">ATS Keyword Match: {{ summary.cv_tailoring.ats_keyword_coverage.coverage_score }}%</div>
+              <div class="text-[11px] text-emerald-700">
+                Matched keywords: {{ summary.cv_tailoring.ats_keyword_coverage.matched_keywords|join:", "|default:"General criteria" }}
+              </div>
+            </div>
+            {% if summary.cv_tailoring.ats_keyword_coverage.missing_keywords %}
+            <div class="text-[11px] text-amber-800 bg-amber-50 px-2.5 py-1 rounded border border-amber-200">
+              Missing keywords: {{ summary.cv_tailoring.ats_keyword_coverage.missing_keywords|join:", " }}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Targeted Summary -->
+          <div class="space-y-1">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Targeted Professional Summary</h4>
+            <div class="p-3 bg-slate-50 rounded border border-slate-200 text-xs text-slate-800 leading-relaxed font-serif">
+              {{ summary.cv_tailoring.targeted_summary }}
+            </div>
+          </div>
+
+          <!-- Prioritized Skills Alignment -->
+          <div class="space-y-2">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Prioritized Competencies for Role</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {% for s in summary.cv_tailoring.prioritized_skills|slice:":6" %}
+              <div class="p-2 rounded border text-xs flex items-start justify-between {% if s.is_matched_requirement %}bg-blue-50/60 border-blue-200 text-blue-900{% else %}bg-slate-50 border-slate-200 text-slate-700{% endif %}">
+                <span class="font-semibold">{{ s.name }}</span>
+                <span class="text-[10px] font-mono uppercase text-slate-500">{{ s.match_type }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Tailored Experience Bullets -->
+          {% if summary.cv_tailoring.tailored_experience_bullets %}
+          <div class="space-y-2">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Optimized Accomplishment Bullets</h4>
+            <div class="space-y-2">
+              {% for b_group in summary.cv_tailoring.tailored_experience_bullets|slice:":2" %}
+              <div class="p-3 bg-slate-50 rounded border border-slate-200 space-y-1">
+                <div class="text-xs font-bold text-slate-800">{{ b_group.role }} at {{ b_group.organization }}</div>
+                <ul class="list-disc list-inside text-xs text-slate-700 space-y-1">
+                  {% for b in b_group.tailored_bullets %}
+                  <li>{{ b }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% else %}
+        <div class="p-8 text-center bg-slate-50 rounded-lg border border-dashed border-slate-300 space-y-2">
+          <svg class="w-8 h-8 text-slate-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <p class="text-xs font-semibold text-slate-700">No tailored CV recommendations yet.</p>
+          <p class="text-[11px] text-slate-500 max-w-sm mx-auto">Click "Optimize CV for Role" to generate targeted executive statements and alignment rankings.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Section 3: Application Questionnaire & Essay Answers -->
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+              <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>3. Application Questions & Essay Prompts</span>
+            </h2>
+            <p class="text-xs text-slate-500">Draft answers with STAR framework adhering strictly to word and character limits.</p>
+          </div>
+        </div>
+
+        {% if summary.questions %}
+        <div class="space-y-4">
+          {% for item in summary.questions %}
+          <div class="p-4 rounded-lg border border-slate-200 bg-slate-50/50 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+              <div class="space-y-1 flex-1">
+                <span class="text-[10px] font-mono text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 font-semibold">
+                  {{ item.question.get_category_display }}
+                </span>
+                <p class="text-xs font-bold text-slate-800">{{ item.question.question_text }}</p>
+                <div class="text-[11px] text-slate-500 flex items-center space-x-3">
+                  {% if item.question.max_words %}<span>Limit: max {{ item.question.max_words }} words</span>{% endif %}
+                  {% if item.question.max_characters %}<span>Limit: max {{ item.question.max_characters }} chars</span>{% endif %}
+                  <span>Current: {{ item.question.word_count }} words</span>
+                </div>
+              </div>
+
+              <!-- AI Answer Trigger Form -->
+              <form action="{% url 'applications:ai_answer_question' application.pk item.question.pk %}" method="post" class="flex items-center gap-1.5">
+                {% csrf_token %}
+                <select name="tone" class="text-xs rounded border-slate-300 py-1 focus:ring-blue-500">
+                  <option value="STAR_METHOD">STAR Framework</option>
+                  <option value="CONCISE">Concise & Direct</option>
+                  <option value="EXECUTIVE">Executive Impact</option>
+                  <option value="ACADEMIC">Academic / Research</option>
+                </select>
+                <button type="submit" class="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-semibold shadow-sm flex items-center space-x-1">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                  <span>AI Draft</span>
+                </button>
+              </form>
+            </div>
+
+            {% if item.question.answer_draft %}
+            <div class="p-3 bg-white rounded border border-slate-200 text-xs text-slate-800 leading-relaxed font-serif shadow-sm">
+              {{ item.question.answer_draft }}
+            </div>
+            {% else %}
+            <div class="p-2 text-center text-xs text-slate-400 italic">No answer drafted yet.</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-6 text-center bg-slate-50 rounded border border-dashed border-slate-300 text-xs text-slate-500">
+          No questions configured for this application workspace. You can add questions from the main workspace view.
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Right Sidebar: Version History & Model Config -->
+    <div class="space-y-6">
+
+      <!-- Version Control & Audit Trail -->
+      <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-4">
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-1.5 pb-2 border-b border-slate-100">
+          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Cover Letter Version History</span>
+        </h3>
+
+        {% if summary.cover_letter_versions %}
+        <div class="space-y-2">
+          {% for ver in summary.cover_letter_versions %}
+          <div class="p-2.5 rounded border text-xs space-y-1 {% if ver.is_active %}bg-blue-50/70 border-blue-200{% else %}bg-slate-50 border-slate-200{% endif %}">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-800">Draft v{{ ver.version_number }}</span>
+              {% if ver.is_active %}
+              <span class="text-[10px] font-bold text-blue-700">Active</span>
+              {% else %}
+              <form action="{% url 'applications:ai_apply_draft' application.pk %}" method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="version_type" value="document">
+                <input type="hidden" name="version_id" value="{{ ver.pk }}">
+                <button type="submit" class="text-[11px] text-blue-600 hover:text-blue-800 underline">Restore</button>
+              </form>
+              {% endif %}
+            </div>
+            <div class="text-[11px] text-slate-500">
+              {{ ver.word_count }} words • {{ ver.created_at|date:"M d, H:i" }}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-xs text-slate-400 italic">No previous versions recorded.</p>
+        {% endif %}
+      </div>
+
+      <!-- Opportunity Target Snapshot -->
+      <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-3">
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100">
+          Target Requirements
+        </h3>
+        <div class="space-y-2 text-xs">
+          <div>
+            <span class="text-slate-400 font-mono text-[10px] uppercase block">Mandatory Skills:</span>
+            <div class="text-slate-700 font-medium">
+              {{ application.opportunity.intelligence.required_skills|join:", "|default:"Not extracted" }}
+            </div>
+          </div>
+          <div>
+            <span class="text-slate-400 font-mono text-[10px] uppercase block">Required Documents:</span>
+            <div class="text-slate-700">
+              {% for d in application.application_documents.all %}
+              <div class="flex items-center space-x-1.5 py-0.5">
+                <span class="w-1.5 h-1.5 rounded-full {% if d.has_file %}bg-emerald-500{% else %}bg-amber-400{% endif %}"></span>
+                <span>{{ d.title }}</span>
+                {% if d.is_tailored %}<span class="text-[10px] text-blue-600 font-bold">(Tailored)</span>{% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

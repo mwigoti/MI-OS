@@ -60,6 +60,7 @@ LOCAL_APPS = [
     "apps.profiles.apps.ProfilesConfig",
     "apps.documents.apps.DocumentsConfig",
     "apps.opportunities.apps.OpportunitiesConfig",
+    "apps.matching.apps.MatchingConfig",
     "apps.applications.apps.ApplicationsConfig",
     "apps.notifications.apps.NotificationsConfig",
 ]
@@ -164,7 +165,38 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.opportunities.tasks.expire_past_opportunities",
         "schedule": 24 * 3600,  # Once a day
     },
+    "process_pending_intelligence": {
+        "task": "apps.opportunities.tasks.process_pending_intelligence",
+        "schedule": env.int("OPPORTUNITY_INTELLIGENCE_INTERVAL_MINUTES", default=30) * 60,
+    },
 }
+
+# ==============================================================================
+# AI Provider & Opportunity Intelligence Settings (Milestone 3)
+# ==============================================================================
+LLM_PROVIDER = env("LLM_PROVIDER", default="gemini")
+LLM_FALLBACK_PROVIDER = env("LLM_FALLBACK_PROVIDER", default="huggingface")
+
+# Google Gemini API
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
+GEMINI_MODEL = env("GEMINI_MODEL", default="gemini-2.5-flash")
+GEMINI_TIMEOUT_SECONDS = env.int("GEMINI_TIMEOUT_SECONDS", default=120)
+GEMINI_MAX_RETRIES = env.int("GEMINI_MAX_RETRIES", default=2)
+
+# Hugging Face Inference Providers
+HUGGINGFACE_API_KEY = env("HUGGINGFACE_API_KEY", default="")
+HUGGINGFACE_MODEL = env("HUGGINGFACE_MODEL", default="Qwen/Qwen2.5-7B-Instruct")
+HUGGINGFACE_PROVIDER = env("HUGGINGFACE_PROVIDER", default="together")
+HUGGINGFACE_TIMEOUT_SECONDS = env.int("HUGGINGFACE_TIMEOUT_SECONDS", default=120)
+HUGGINGFACE_MAX_RETRIES = env.int("HUGGINGFACE_MAX_RETRIES", default=1)
+
+# AI Usage & Thresholds
+AI_MAX_REQUESTS_PER_RUN = env.int("AI_MAX_REQUESTS_PER_RUN", default=20)
+AI_MAX_CONTENT_CHARS = env.int("AI_MAX_CONTENT_CHARS", default=50000)
+AI_ENABLE_FALLBACK = env.bool("AI_ENABLE_FALLBACK", default=True)
+AI_MIN_CONFIDENCE_FOR_REUSE = env.float("AI_MIN_CONFIDENCE_FOR_REUSE", default=0.80)
+OPPORTUNITY_CLOSING_SOON_DAYS = env.int("OPPORTUNITY_CLOSING_SOON_DAYS", default=7)
+OPPORTUNITY_INTELLIGENCE_BATCH_SIZE = env.int("OPPORTUNITY_INTELLIGENCE_BATCH_SIZE", default=10)
 
 # Email Configuration
 # Section 24: Notifications app foundation - console backend for Milestone 0

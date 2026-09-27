@@ -14,8 +14,9 @@ urlpatterns = [
     # Manual URL Ingestion
     path("add/", views.opportunity_manual_add_view, name="add"),
 
-    # Opportunity Detail
+    # Opportunity Detail & Analysis
     path("<uuid:pk>/", views.opportunity_detail_view, name="detail"),
+    path("<uuid:pk>/analyze/", views.opportunity_analyze_view, name="analyze"),
 
     # Source Management
     path("sources/", views.sources_dashboard_view, name="sources"),

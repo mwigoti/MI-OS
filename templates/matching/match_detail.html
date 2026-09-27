@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Match Analysis: {{ opportunity.title }} — MwohaOS{% endblock %}
+{% block header_title %}Match Evidence & Analysis{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+  <!-- Top Navigation & Actions -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <a href="{% url 'matching:index' %}" class="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-slate-800">
+      &larr; Back to Opportunity Matches
+    </a>
+    <div class="flex items-center space-x-3">
+      <!-- Rematch Button -->
+      <form action="{% url 'matching:rematch' opportunity.pk %}" method="post" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="px-3.5 py-2 border border-slate-300 text-slate-700 bg-white rounded-md text-xs font-semibold hover:bg-slate-50 shadow-sm flex items-center">
+          <svg class="w-3.5 h-3.5 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Recalculate Alignment
+        </button>
+      </form>
+
+      <a href="{% url 'applications:create' %}?opportunity={{ opportunity.pk }}" class="px-3.5 py-2 border border-emerald-300 text-emerald-800 bg-emerald-50 rounded-md text-xs font-semibold hover:bg-emerald-100 shadow-sm flex items-center">
+        <svg class="w-3.5 h-3.5 mr-1.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Application Workspace
+      </a>
+
+      {% if opportunity.application_url %}
+      <a href="{{ opportunity.application_url }}" target="_blank" rel="noopener" class="px-4 py-2 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 shadow-sm flex items-center">
+        <span>Apply on Official Portal</span>
+        <svg class="w-3.5 h-3.5 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Main Score Banner Card -->
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div class="space-y-2 flex-1">
+        <div class="flex flex-wrap items-center gap-2 mb-1">
+          <span class="px-2.5 py-0.5 rounded text-xs font-mono font-bold uppercase
+            {% if opportunity.opportunity_type == 'JOB' %}bg-blue-100 text-blue-800
+            {% elif opportunity.opportunity_type == 'FELLOWSHIP' %}bg-purple-100 text-purple-800
+            {% elif opportunity.opportunity_type == 'GRANT' %}bg-emerald-100 text-emerald-800
+            {% elif opportunity.opportunity_type == 'COMPETITION' %}bg-amber-100 text-amber-800
+            {% elif opportunity.opportunity_type == 'RESEARCH' %}bg-cyan-100 text-cyan-800
+            {% else %}bg-slate-100 text-slate-800{% endif %}">
+            {{ opportunity.get_opportunity_type_display }}
+          </span>
+          <span class="px-2.5 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-mono">
+            {{ opportunity.get_sector_display }}
+          </span>
+          {% if opportunity.remote %}
+          <span class="px-2 py-0.5 rounded bg-teal-50 text-teal-700 text-xs font-mono border border-teal-200">
+            Remote Eligible
+          </span>
+          {% endif %}
+          <!-- Eligibility Pill -->
+          <span class="px-2.5 py-0.5 rounded text-xs font-mono font-bold uppercase
+            {% if match.eligibility_status == 'ELIGIBLE' %}bg-emerald-100 text-emerald-800
+            {% elif match.eligibility_status == 'INELIGIBLE' %}bg-rose-100 text-rose-800
+            {% else %}bg-amber-100 text-amber-800{% endif %}">
+            {{ match.get_eligibility_status_display }}
+          </span>
+        </div>
+
+        <h1 class="text-2xl font-bold text-slate-900 leading-tight">{{ opportunity.title }}</h1>
+        <p class="text-sm font-semibold text-slate-700">{{ opportunity.organization }}</p>
+      </div>
+
+      <!-- Score Gauge -->
+      <div class="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 border border-slate-200 min-w-[160px] text-center">
+        <span class="text-4xl font-black {% if match.overall_score >= 80 %}text-purple-600{% elif match.overall_score >= 70 %}text-blue-600{% elif match.overall_score >= 60 %}text-amber-600{% else %}text-slate-500{% endif %}">
+          {{ match.overall_score|floatformat:0 }}%
+        </span>
+        <span class="text-xs font-mono font-bold text-slate-600 mt-1 uppercase">{{ match.score_band_label }}</span>
+        <span class="text-[10px] text-slate-400 font-mono mt-0.5">Algorithm v{{ match.matching_version }}</span>
+      </div>
+    </div>
+
+    <!-- Component Scores Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 mt-6 pt-5 border-t border-slate-100 text-xs font-mono">
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100 text-center">
+        <span class="text-slate-400 block text-[10px] uppercase">Eligibility</span>
+        <span class="font-bold text-slate-800 text-sm">
+          {% if match.eligibility_status == 'ELIGIBLE' %}100%{% elif match.eligibility_status == 'UNCERTAIN' %}65%{% else %}0%{% endif %}
+        </span>
+      </div>
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100 text-center">
+        <span class="text-slate-400 block text-[10px] uppercase">Skills</span>
+        <span class="font-bold text-slate-800 text-sm">{{ match.skill_score|floatformat:0 }}%</span>
+      </div>
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100 text-center">
+        <span class="text-slate-400 block text-[10px] uppercase">Experience</span>
+        <span class="font-bold text-slate-800 text-sm">{{ match.experience_score|floatformat:0 }}%</span>
+      </div>
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100 text-center">
+        <span class="text-slate-400 block text-[10px] uppercase">Education</span>
+        <span class="font-bold text-slate-800 text-sm">{{ match.education_score|floatformat:0 }}%</span>
+      </div>
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100 text-center">
+        <span class="text-slate-400 block text-[10px] uppercase">Sector</span>
+        <span class="font-bold text-slate-800 text-sm">{{ match.sector_score|floatformat:0 }}%</span>
+      </div>
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100 text-center">
+        <span class="text-slate-400 block text-[10px] uppercase">Type</span>
+        <span class="font-bold text-slate-800 text-sm">{{ match.opportunity_type_score|floatformat:0 }}%</span>
+      </div>
+      <div class="p-2.5 rounded bg-slate-50 border border-slate-100 text-center">
+        <span class="text-slate-400 block text-[10px] uppercase">Location</span>
+        <span class="font-bold text-slate-800 text-sm">{{ match.location_score|floatformat:0 }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Factual Explanation Box -->
+  <div class="bg-blue-50/50 rounded-lg border border-blue-200 p-6 shadow-sm space-y-3">
+    <h2 class="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center">
+      <svg class="w-4 h-4 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Deterministic Alignment Explanation
+    </h2>
+    <div class="text-xs text-slate-700 leading-relaxed whitespace-pre-line font-sans">
+      {{ match.explanation }}
+    </div>
+  </div>
+
+  <!-- Main Content Split -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Left Column: Detailed Evidence & Requirement Analysis -->
+    <div class="md:col-span-2 space-y-6">
+
+      <!-- ELIGIBILITY ANALYSIS -->
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-3">
+        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Eligibility & Constraint Check
+        </h2>
+        <div class="space-y-2 text-xs">
+          {% for reason in match.eligibility_reasons %}
+          <div class="flex items-start space-x-2">
+            <span class="{% if match.eligibility_status == 'INELIGIBLE' %}text-rose-600{% else %}text-emerald-600{% endif %} font-bold">•</span>
+            <span class="text-slate-700">{{ reason }}</span>
+          </div>
+          {% empty %}
+          <p class="text-slate-500 italic">No restrictive eligibility constraints identified.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- SKILL REQUIREMENTS BREAKDOWN -->
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Skill Qualifications Breakdown
+        </h2>
+
+        <!-- Matched Skills with Evidence -->
+        <div>
+          <span class="text-xs font-bold text-emerald-800 uppercase tracking-wider block mb-2 text-[11px]">
+            Satisfied Skills ({{ match.matching_skills|length }})
+          </span>
+          <div class="space-y-2">
+            {% for item in match.matching_skills %}
+            <div class="p-2.5 rounded bg-slate-50 border border-slate-200 flex items-start justify-between text-xs">
+              <div>
+                <span class="font-bold text-slate-900">{{ item.skill }}</span>
+                <p class="text-[11px] text-slate-500 italic mt-0.5">{{ item.evidence }}</p>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase
+                {% if item.match_type == 'EXACT' %}bg-emerald-100 text-emerald-800
+                {% elif item.match_type == 'NORMALIZED' %}bg-blue-100 text-blue-800
+                {% else %}bg-purple-100 text-purple-800{% endif %}">
+                {{ item.match_type }}
+              </span>
+            </div>
+            {% empty %}
+            <p class="text-slate-500 italic text-xs">No explicit required skills detected in opportunity.</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Missing Skills -->
+        {% if match.missing_skills %}
+        <div class="pt-3 border-t border-slate-100">
+          <span class="text-xs font-bold text-rose-800 uppercase tracking-wider block mb-2 text-[11px]">
+            Missing Required Skills ({{ match.missing_skills|length }})
+          </span>
+          <div class="flex flex-wrap gap-1.5">
+            {% for mskill in match.missing_skills %}
+            <span class="px-2 py-1 rounded bg-rose-50 text-rose-700 border border-rose-200 text-xs font-mono">
+              ✗ {{ mskill }}
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- EXPERIENCE & PROJECT EVIDENCE -->
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Professional Experience & Projects Evidence
+        </h2>
+
+        <!-- Matching Experience -->
+        {% if match.matching_experience %}
+        <div class="space-y-2">
+          <span class="text-xs font-semibold text-slate-800 block">Supporting Professional Roles:</span>
+          {% for exp in match.matching_experience %}
+          <div class="p-3 rounded bg-slate-50 border border-slate-200 text-xs space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-900">{{ exp.role }}</span>
+              <span class="font-mono text-[11px] text-slate-500">{{ exp.dates }}</span>
+            </div>
+            {% if exp.overlap_keywords %}
+            <div class="flex flex-wrap gap-1 pt-1">
+              <span class="text-[10px] text-slate-400 font-mono">Domain Overlap:</span>
+              {% for kw in exp.overlap_keywords %}
+              <span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-mono">{{ kw }}</span>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Matching Projects -->
+        {% if match.matching_projects %}
+        <div class="pt-3 border-t border-slate-100 space-y-2">
+          <span class="text-xs font-semibold text-slate-800 block">Correlated Project Proof:</span>
+          {% for proj in match.matching_projects %}
+          <div class="p-3 rounded bg-slate-50 border border-slate-200 text-xs space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-900">{{ proj.project_title }}</span>
+              <span class="text-[11px] text-slate-500">{{ proj.role }}</span>
+            </div>
+            <p class="text-[11px] text-slate-600 font-mono">Tech: {{ proj.technologies }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Column: Metadata & Traceability -->
+    <div class="space-y-6">
+      <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-3">
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Assessment Metadata
+        </h3>
+        <div class="space-y-2 text-xs">
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Match Status</span>
+            <span class="font-semibold text-slate-800">{{ match.get_match_status_display }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Evaluated For</span>
+            <span class="font-semibold text-slate-800">{{ match.profile.user.username }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Matching Version</span>
+            <span class="font-mono text-slate-800 text-[11px]">v{{ match.matching_version }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Confidence Level</span>
+            <span class="font-mono font-bold text-slate-800">{{ match.confidence|floatformat:2 }} / 1.0</span>
+          </div>
+          <div class="pt-2 border-t border-slate-100 text-[11px] text-slate-400 font-mono space-y-0.5">
+            <div>Last computed: {{ match.last_matched_at|date:"Y-m-d H:i:s" }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Disclaimer Box -->
+      <div class="bg-slate-50 rounded-lg border border-slate-200 p-5 text-xs text-slate-500 space-y-2">
+        <span class="font-bold text-slate-800 block">Transparent Matching Principle</span>
+        <p class="leading-relaxed">
+          Match scores reflect deterministic alignment between available profile evidence and opportunity requirements. They are not guarantees of employment, funding, admission, or application success.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

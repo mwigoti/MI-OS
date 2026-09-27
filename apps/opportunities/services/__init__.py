@@ -26,6 +26,11 @@ from .validation import (
     validate_normalized_opportunity,
     OpportunityValidationError,
 )
+from .deterministic_extraction import extract_deterministic_intelligence, DeadlineIntelligence
+from .intelligence import process_opportunity_intelligence, clean_content_for_intelligence
+from .llm_router import LLMRouter
+from .llm_gemini import GeminiProvider
+from .llm_huggingface import HuggingFaceProvider
 
 __all__ = [
     "BaseOpportunityConnector",
@@ -49,4 +54,11 @@ __all__ = [
     "resolve_deduplication",
     "validate_normalized_opportunity",
     "OpportunityValidationError",
+    "extract_deterministic_intelligence",
+    "DeadlineIntelligence",
+    "process_opportunity_intelligence",
+    "clean_content_for_intelligence",
+    "LLMRouter",
+    "GeminiProvider",
+    "HuggingFaceProvider",
 ]

@@ -84,3 +84,45 @@ class IngestionStatus(models.TextChoices):
     SUCCESS = "SUCCESS", "Success"
     PARTIAL = "PARTIAL", "Partial Success"
     FAILED = "FAILED", "Failed"
+
+
+class ExtractionStatus(models.TextChoices):
+    """
+    Intelligence extraction progress states.
+    """
+    PENDING = "PENDING", "Pending"
+    PROCESSING = "PROCESSING", "Processing"
+    COMPLETED = "COMPLETED", "Completed"
+    PARTIAL = "PARTIAL", "Partial"
+    FAILED = "FAILED", "Failed"
+
+
+class ExtractionMethod(models.TextChoices):
+    """
+    Strategy employed for extracting intelligence.
+    """
+    DETERMINISTIC = "DETERMINISTIC", "Deterministic"
+    AI = "AI", "AI-Assisted"
+    HYBRID = "HYBRID", "Hybrid"
+    MANUAL = "MANUAL", "Manual"
+
+
+class ExtractionProvider(models.TextChoices):
+    """
+    LLM provider used for AI extraction.
+    """
+    NONE = "NONE", "None (Deterministic Only)"
+    GEMINI = "GEMINI", "Google Gemini"
+    HUGGINGFACE = "HUGGINGFACE", "Hugging Face Inference"
+
+
+class DeadlineStatus(models.TextChoices):
+    """
+    Urgency & lifecycle of opportunity deadline.
+    """
+    NO_DEADLINE = "NO_DEADLINE", "No Deadline (Rolling / Ongoing)"
+    OPEN = "OPEN", "Open"
+    CLOSING_SOON = "CLOSING_SOON", "Closing Soon"
+    CLOSED = "CLOSED", "Closed / Passed"
+    UNKNOWN = "UNKNOWN", "Unknown"
+

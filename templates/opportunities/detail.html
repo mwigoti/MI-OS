@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}{{ opportunity.title }} — MwohaOS{% endblock %}
+{% block header_title %}Opportunity Intelligence{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+  <!-- Back Link & Action Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <a href="{% url 'opportunities:index' %}" class="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-slate-800">
+      &larr; Back to Opportunity Inbox
+    </a>
+    <div class="flex items-center space-x-3">
+      <!-- Analyze / Re-analyze Form -->
+      <form action="{% url 'opportunities:analyze' opportunity.pk %}" method="post" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="force" value="1">
+        <button type="submit" class="px-3.5 py-2 border border-slate-300 text-slate-700 bg-white rounded-md text-xs font-semibold hover:bg-slate-50 shadow-sm flex items-center">
+          <svg class="w-3.5 h-3.5 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          {% if intelligence %}Re-analyze Intelligence{% else %}Analyze Opportunity{% endif %}
+        </button>
+      </form>
+
+      <form action="{% url 'matching:rematch' opportunity.pk %}" method="post" class="inline">
+        {% csrf_token %}
+        <button type="submit" class="px-3.5 py-2 border border-purple-300 text-purple-700 bg-purple-50 rounded-md text-xs font-semibold hover:bg-purple-100 shadow-sm flex items-center">
+          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          View Match Fit
+        </button>
+      </form>
+
+      <a href="{% url 'applications:create' %}?opportunity={{ opportunity.pk }}" class="px-3.5 py-2 border border-emerald-300 text-emerald-800 bg-emerald-50 rounded-md text-xs font-semibold hover:bg-emerald-100 shadow-sm flex items-center">
+        <svg class="w-3.5 h-3.5 mr-1.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Workspace
+      </a>
+
+      {% if opportunity.application_url %}
+      <a href="{{ opportunity.application_url }}" target="_blank" rel="noopener" class="px-4 py-2 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 shadow-sm flex items-center">
+        <span>Apply on Official Portal</span>
+        <svg class="w-3.5 h-3.5 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <span class="px-2.5 py-0.5 rounded text-xs font-mono font-bold uppercase
+        {% if opportunity.opportunity_type == 'JOB' %}bg-blue-100 text-blue-800
+        {% elif opportunity.opportunity_type == 'FELLOWSHIP' %}bg-purple-100 text-purple-800
+        {% elif opportunity.opportunity_type == 'GRANT' %}bg-emerald-100 text-emerald-800
+        {% elif opportunity.opportunity_type == 'COMPETITION' %}bg-amber-100 text-amber-800
+        {% elif opportunity.opportunity_type == 'RESEARCH' %}bg-cyan-100 text-cyan-800
+        {% else %}bg-slate-100 text-slate-800{% endif %}">
+        {{ opportunity.get_opportunity_type_display }}
+      </span>
+      <span class="px-2.5 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-mono">
+        {{ opportunity.get_sector_display }}
+      </span>
+      {% if opportunity.remote %}
+      <span class="px-2 py-0.5 rounded bg-teal-50 text-teal-700 text-xs font-mono border border-teal-200">
+        Remote Eligible
+      </span>
+      {% endif %}
+      
+      <!-- Deadline Status Badge -->
+      <span class="px-2.5 py-0.5 rounded text-xs font-mono font-semibold
+        {% if deadline_eval.deadline_status == 'CLOSING_SOON' %}bg-amber-100 text-amber-800 border border-amber-300
+        {% elif deadline_eval.deadline_status == 'CLOSED' %}bg-rose-100 text-rose-800
+        {% elif deadline_eval.deadline_status == 'OPEN' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+        {% else %}bg-slate-100 text-slate-600{% endif %}">
+        {{ deadline_eval.deadline_status }}
+        {% if deadline_eval.days_remaining is not None and deadline_eval.days_remaining > 0 %}
+          ({{ deadline_eval.days_remaining }}d left)
+        {% endif %}
+      </span>
+
+      <!-- Intelligence Status Badge -->
+      {% if intelligence %}
+      <span class="px-2.5 py-0.5 rounded text-xs font-mono
+        {% if intelligence.extraction_status == 'COMPLETED' %}bg-blue-50 text-blue-700 border border-blue-200
+        {% elif intelligence.extraction_status == 'PROCESSING' %}bg-purple-50 text-purple-700 animate-pulse
+        {% else %}bg-amber-50 text-amber-800{% endif %}">
+        INTEL: {{ intelligence.extraction_method }} ({{ intelligence.extraction_provider }})
+      </span>
+      {% endif %}
+    </div>
+
+    <h1 class="text-2xl font-bold text-slate-900 leading-tight">{{ opportunity.title }}</h1>
+    <p class="text-sm font-semibold text-slate-700 mt-1">{{ opportunity.organization }}</p>
+
+    <!-- Metadata Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-5 border-t border-slate-100 text-xs">
+      <div>
+        <span class="text-slate-400 font-mono block uppercase text-[10px]">Location</span>
+        <span class="font-semibold text-slate-800">{{ opportunity.location|default:"Not specified" }}</span>
+      </div>
+      <div>
+        <span class="text-slate-400 font-mono block uppercase text-[10px]">Deadline</span>
+        <span class="font-semibold {% if opportunity.is_expired %}text-rose-600{% else %}text-slate-800{% endif %}">
+          {{ opportunity.deadline|date:"d M Y, H:i"|default:"Rolling / Open" }}
+        </span>
+      </div>
+      <div>
+        <span class="text-slate-400 font-mono block uppercase text-[10px]">Compensation / Grant</span>
+        <span class="font-semibold text-slate-800">{{ opportunity.compensation|default:"Undisclosed" }}</span>
+      </div>
+      <div>
+        <span class="text-slate-400 font-mono block uppercase text-[10px]">Posted Date</span>
+        <span class="font-semibold text-slate-800">{{ opportunity.posted_date|date:"d M Y"|default:"Recently" }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Split -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Left Column: Intelligence Dossier -->
+    <div class="md:col-span-2 space-y-6">
+
+      {% if intelligence and intelligence.extraction_status == 'COMPLETED' %}
+      <!-- EXECUTIVE SUMMARY -->
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-3">
+        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center">
+          <svg class="w-4 h-4 mr-1.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Executive Summary
+        </h2>
+        <p class="text-xs text-slate-700 leading-relaxed">{{ intelligence.summary }}</p>
+        {% if intelligence.opportunity_purpose %}
+        <div class="pt-2 text-xs">
+          <span class="font-semibold text-slate-800 block mb-0.5">Core Objective / Problem Addressed:</span>
+          <p class="text-slate-600">{{ intelligence.opportunity_purpose }}</p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- WHO SHOULD APPLY & ELIGIBILITY -->
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Who This Is For & Eligibility
+        </h2>
+        
+        {% if intelligence.who_should_apply %}
+        <div>
+          <span class="text-xs font-semibold text-slate-800 block mb-1">Target Applicant Profiles:</span>
+          <div class="flex flex-wrap gap-1.5">
+            {% for profile in intelligence.who_should_apply %}
+            <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-800 text-xs font-medium border border-blue-100">{{ profile }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if intelligence.eligibility %}
+        <div class="space-y-2 pt-2 text-xs">
+          <span class="font-semibold text-slate-800 block">Structured Eligibility Criteria:</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+            {% for cat, vals in intelligence.eligibility.items %}
+              {% if vals %}
+              <div class="p-2 rounded bg-slate-50 border border-slate-100">
+                <span class="font-mono text-slate-500 uppercase block font-semibold text-[10px]">{{ cat }}:</span>
+                <span class="text-slate-700">{{ vals|join:", " }}</span>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- REQUIRED VS PREFERRED QUALIFICATIONS -->
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Qualifications & Requirements
+        </h2>
+
+        {% if intelligence.required_requirements %}
+        <div>
+          <span class="text-xs font-bold text-rose-700 block mb-1 uppercase tracking-wider text-[11px]">Mandatory Requirements:</span>
+          <ul class="list-disc list-inside space-y-1 text-xs text-slate-700 pl-1">
+            {% for req in intelligence.required_requirements %}
+            <li>{{ req }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        {% if intelligence.preferred_requirements %}
+        <div class="pt-3 border-t border-slate-100">
+          <span class="text-xs font-bold text-emerald-700 block mb-1 uppercase tracking-wider text-[11px]">Preferred / Nice-to-Have:</span>
+          <ul class="list-disc list-inside space-y-1 text-xs text-slate-600 pl-1">
+            {% for pref in intelligence.preferred_requirements %}
+            <li>{{ pref }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        {% if intelligence.required_skills or intelligence.preferred_skills %}
+        <div class="pt-3 border-t border-slate-100 space-y-2">
+          <span class="text-xs font-semibold text-slate-800 block">Extracted Skillset:</span>
+          <div class="flex flex-wrap gap-1.5">
+            {% for skill in intelligence.required_skills %}
+            <span class="px-2 py-0.5 rounded bg-slate-900 text-white font-mono text-[10px]">{{ skill }} (Required)</span>
+            {% endfor %}
+            {% for pskill in intelligence.preferred_skills %}
+            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px] border border-slate-300">{{ pskill }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- REQUIRED DOCUMENTS CHECKLIST -->
+      {% if intelligence.required_documents %}
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-3">
+        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Required Documents Checklist
+        </h2>
+        <div class="space-y-2">
+          {% for doc in intelligence.required_documents %}
+          <div class="flex items-start justify-between p-2.5 rounded bg-slate-50 border border-slate-200 text-xs">
+            <div>
+              <span class="font-bold text-slate-800">{{ doc.name }}</span>
+              {% if doc.evidence %}
+              <p class="text-[11px] text-slate-500 italic mt-0.5">Evidence: "{{ doc.evidence }}"</p>
+              {% endif %}
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase
+              {% if doc.required %}bg-rose-100 text-rose-800{% else %}bg-slate-200 text-slate-700{% endif %}">
+              {% if doc.required %}MANDATORY{% else %}CONDITIONAL{% endif %}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- APPLICATION PROCESS & TIMELINE -->
+      {% if intelligence.application_process or intelligence.important_dates %}
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Application Workflow & Dates
+        </h2>
+
+        {% if intelligence.application_process %}
+        <div class="space-y-1.5">
+          <span class="text-xs font-semibold text-slate-800 block">Process Steps:</span>
+          <ol class="list-decimal list-inside space-y-1 text-xs text-slate-700 pl-1">
+            {% for step in intelligence.application_process %}
+            <li>{{ step }}</li>
+            {% endfor %}
+          </ol>
+        </div>
+        {% endif %}
+
+        {% if intelligence.important_dates %}
+        <div class="pt-3 border-t border-slate-100 space-y-2">
+          <span class="text-xs font-semibold text-slate-800 block">Important Dates:</span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            {% for dt in intelligence.important_dates %}
+            <div class="p-2 rounded bg-slate-50 border border-slate-200">
+              <span class="font-semibold text-slate-900 block">{{ dt.name }}</span>
+              <span class="font-mono text-blue-700 text-[11px]">{{ dt.date }} {% if dt.timezone %}({{ dt.timezone }}){% endif %}</span>
+              {% if dt.evidence %}
+              <span class="text-[10px] text-slate-400 block truncate" title="{{ dt.evidence }}">Quote: {{ dt.evidence }}</span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% endif %}
+
+      <!-- RAW OPPORTUNITY SOURCE CONTENT -->
+      <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+        <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Original Opportunity Description
+        </h2>
+        <div class="prose prose-sm max-w-none text-xs text-slate-700 leading-relaxed break-words space-y-3">
+          {{ opportunity.description|safe }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Verification & Provenance -->
+    <div class="space-y-6">
+      <!-- AI Intelligence Health & Provider Card -->
+      <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-3">
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Intelligence Audit
+        </h3>
+        <div class="space-y-2 text-xs">
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Extraction Status</span>
+            <span class="font-semibold text-slate-800">{{ intelligence.extraction_status|default:"Pending" }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Method & Provider</span>
+            <span class="font-mono text-slate-800 text-[11px]">
+              {{ intelligence.extraction_method|default:"Deterministic" }} ({{ intelligence.extraction_provider|default:"None" }})
+            </span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Model Name</span>
+            <span class="font-mono text-slate-700 text-[11px]">{{ intelligence.model_name|default:"Deterministic heuristics" }}</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Extraction Confidence</span>
+            <span class="font-mono font-bold text-slate-800">{{ intelligence.confidence|default:0.0|floatformat:2 }} / 1.0</span>
+          </div>
+          {% if intelligence.last_extracted_at %}
+          <div class="pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-mono">
+            Analyzed: {{ intelligence.last_extracted_at|date:"Y-m-d H:i:s" }}
+          </div>
+          {% endif %}
+          {% if intelligence.extraction_error %}
+          <div class="p-2 rounded bg-rose-50 text-rose-700 text-[10px] font-mono mt-2">
+            {{ intelligence.extraction_error }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Source Traceability -->
+      <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm space-y-3">
+        <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+          Origin & Verification
+        </h3>
+        <div class="space-y-2 text-xs">
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Source Type</span>
+            <span class="font-semibold text-slate-800">
+              {% if opportunity.source %}
+                {{ opportunity.source.name }} ({{ opportunity.source.get_source_type_display }})
+              {% else %}
+                Direct User URL Ingestion
+              {% endif %}
+            </span>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Canonical Source URL</span>
+            <a href="{{ opportunity.source_url }}" target="_blank" rel="noopener" class="text-blue-600 hover:underline break-all block">
+              {{ opportunity.source_url }} &rarr;
+            </a>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-mono">Content Hash</span>
+            <span class="font-mono text-[10px] text-slate-600 break-all block bg-slate-50 p-1.5 rounded border border-slate-100">
+              {{ opportunity.content_hash }}
+            </span>
+          </div>
+          <div class="pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-mono">
+            <span>First seen: {{ opportunity.first_seen_at|date:"Y-m-d H:i" }}</span><br>
+            <span>Last seen: {{ opportunity.last_seen_at|date:"Y-m-d H:i" }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

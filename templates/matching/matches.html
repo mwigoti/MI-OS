@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Opportunity Matches — MwohaOS{% endblock %}
+{% block header_title %}Opportunity Matching & Alignment{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Top Bar / Action -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-slate-900">Opportunity Matches</h1>
+      <p class="text-xs text-slate-500">Transparent, evidence-grounded alignment with your professional profile.</p>
+    </div>
+    <div class="flex items-center space-x-3">
+      <a href="{% url 'opportunities:index' %}" class="inline-flex items-center px-3.5 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-md hover:bg-slate-50 shadow-sm">
+        Opportunity Inbox &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
+      <div>
+        <span class="text-slate-400 font-mono block uppercase text-[10px]">Evaluated Opportunities</span>
+        <span class="text-2xl font-bold text-slate-900">{{ total_matched }}</span>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+        M4
+      </div>
+    </div>
+    <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
+      <div>
+        <span class="text-slate-400 font-mono block uppercase text-[10px]">Eligible Matches</span>
+        <span class="text-2xl font-bold text-emerald-600">{{ eligible_count }}</span>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+        ✓
+      </div>
+    </div>
+    <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center justify-between">
+      <div>
+        <span class="text-slate-400 font-mono block uppercase text-[10px]">Strong Alignment (≥80%)</span>
+        <span class="text-2xl font-bold text-purple-600">{{ high_match_count }}</span>
+      </div>
+      <div class="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+        ★
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Facet Filters -->
+  <div class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm space-y-3">
+    <form method="get" class="space-y-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <div>
+          <select name="min_score" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="0" {% if min_score == '0' %}selected{% endif %}>All Match Scores</option>
+            <option value="80" {% if min_score == '80' %}selected{% endif %}>≥ 80% (Strong)</option>
+            <option value="70" {% if min_score == '70' %}selected{% endif %}>≥ 70% (Moderate+)</option>
+            <option value="60" {% if min_score == '60' %}selected{% endif %}>≥ 60% (Partial+)</option>
+          </select>
+        </div>
+        <div>
+          <select name="eligibility" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Eligibility States</option>
+            {% for val, lbl in eligibility_choices %}
+            <option value="{{ val }}" {% if selected_eligibility == val %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <select name="type" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Opportunity Types</option>
+            {% for val, lbl in opportunity_types %}
+            <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <select name="sector" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Sectors</option>
+            {% for val, lbl in sectors %}
+            <option value="{{ val }}" {% if selected_sector == val %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <select name="remote" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="">Work Mode</option>
+            <option value="1" {% if remote == '1' %}selected{% endif %}>Remote Only</option>
+            <option value="0" {% if remote == '0' %}selected{% endif %}>Onsite / Hybrid</option>
+          </select>
+        </div>
+        <div>
+          <select name="order" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="-overall_score" {% if ordering == '-overall_score' %}selected{% endif %}>Highest Match Score</option>
+            <option value="deadline_soonest" {% if ordering == 'deadline_soonest' %}selected{% endif %}>Deadline Soonest</option>
+            <option value="-last_matched_at" {% if ordering == '-last_matched_at' %}selected{% endif %}>Recently Evaluated</option>
+          </select>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-semibold hover:bg-slate-800">
+          Filter
+        </button>
+        {% if min_score != '0' or selected_eligibility or selected_type or selected_sector or remote %}
+        <a href="{% url 'matching:index' %}" class="text-xs text-slate-500 hover:text-slate-700 underline">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Matches List -->
+  <div class="space-y-4">
+    {% for match in page_obj %}
+    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:border-slate-300 transition">
+      <div class="flex flex-col md:flex-row md:items-start justify-between gap-5">
+        
+        <!-- Left: Match Score Gauge & Status -->
+        <div class="flex md:flex-col items-center justify-center min-w-[110px] text-center p-3 rounded-lg bg-slate-50 border border-slate-100">
+          <span class="text-3xl font-black {% if match.overall_score >= 80 %}text-purple-600{% elif match.overall_score >= 70 %}text-blue-600{% elif match.overall_score >= 60 %}text-amber-600{% else %}text-slate-500{% endif %}">
+            {{ match.overall_score|floatformat:0 }}%
+          </span>
+          <span class="text-[10px] font-mono uppercase font-bold text-slate-500 mt-1 block">
+            {{ match.score_band_label }}
+          </span>
+
+          <!-- Eligibility Pill -->
+          <div class="mt-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase
+              {% if match.eligibility_status == 'ELIGIBLE' %}bg-emerald-100 text-emerald-800
+              {% elif match.eligibility_status == 'INELIGIBLE' %}bg-rose-100 text-rose-800
+              {% else %}bg-amber-100 text-amber-800{% endif %}">
+              {{ match.get_eligibility_status_display }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Middle: Opportunity Details & Evidence Summary -->
+        <div class="space-y-2 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase
+              {% if match.opportunity.opportunity_type == 'JOB' %}bg-blue-100 text-blue-800
+              {% elif match.opportunity.opportunity_type == 'FELLOWSHIP' %}bg-purple-100 text-purple-800
+              {% elif match.opportunity.opportunity_type == 'GRANT' %}bg-emerald-100 text-emerald-800
+              {% elif match.opportunity.opportunity_type == 'COMPETITION' %}bg-amber-100 text-amber-800
+              {% elif match.opportunity.opportunity_type == 'RESEARCH' %}bg-cyan-100 text-cyan-800
+              {% else %}bg-slate-100 text-slate-800{% endif %}">
+              {{ match.opportunity.get_opportunity_type_display }}
+            </span>
+            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">
+              {{ match.opportunity.get_sector_display }}
+            </span>
+            {% if match.opportunity.remote %}
+            <span class="px-2 py-0.5 rounded bg-teal-50 text-teal-700 font-mono text-[10px] border border-teal-200">
+              REMOTE
+            </span>
+            {% endif %}
+          </div>
+
+          <div>
+            <h2 class="text-base font-bold text-slate-900 hover:text-blue-600 transition">
+              <a href="{% url 'matching:detail' match.pk %}">{{ match.opportunity.title }}</a>
+            </h2>
+            <div class="flex items-center space-x-3 text-xs text-slate-500 mt-0.5">
+              <span class="font-semibold text-slate-700">{{ match.opportunity.organization }}</span>
+              {% if match.opportunity.location %}<span>• {{ match.opportunity.location }}</span>{% endif %}
+              {% if match.opportunity.deadline %}<span>• Deadline: {{ match.opportunity.deadline|date:"d M Y" }}</span>{% endif %}
+            </div>
+          </div>
+
+          <!-- Matching Strengths -->
+          {% if match.required_requirements_met %}
+          <div class="pt-1">
+            <span class="text-[10px] font-mono text-slate-400 uppercase font-semibold">Matched Core Requirements:</span>
+            <div class="flex flex-wrap gap-1.5 mt-0.5">
+              {% for skill in match.required_requirements_met|slice:":5" %}
+              <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-mono font-medium">
+                ✓ {{ skill }}
+              </span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Identified Gaps if any -->
+          {% if match.missing_skills %}
+          <div class="pt-1">
+            <span class="text-[10px] font-mono text-slate-400 uppercase font-semibold">Considerations / Missing:</span>
+            <div class="flex flex-wrap gap-1.5 mt-0.5">
+              {% for mskill in match.missing_skills|slice:":3" %}
+              <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-mono">
+                • {{ mskill }}
+              </span>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Right Side: Component Score Mini-bars & Detail Action -->
+        <div class="flex flex-col items-end justify-between gap-3 min-w-[170px] border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+          <div class="w-full space-y-1.5 text-[11px] font-mono">
+            <div class="flex justify-between text-slate-500">
+              <span>Skills:</span>
+              <span class="font-bold text-slate-800">{{ match.skill_score|floatformat:0 }}%</span>
+            </div>
+            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-blue-600 h-full rounded-full" style="width: {{ match.skill_score }}%"></div>
+            </div>
+
+            <div class="flex justify-between text-slate-500">
+              <span>Experience:</span>
+              <span class="font-bold text-slate-800">{{ match.experience_score|floatformat:0 }}%</span>
+            </div>
+            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-purple-600 h-full rounded-full" style="width: {{ match.experience_score }}%"></div>
+            </div>
+
+            <div class="flex justify-between text-slate-500">
+              <span>Education:</span>
+              <span class="font-bold text-slate-800">{{ match.education_score|floatformat:0 }}%</span>
+            </div>
+            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-teal-600 h-full rounded-full" style="width: {{ match.education_score }}%"></div>
+            </div>
+          </div>
+
+          <a href="{% url 'matching:detail' match.pk %}" class="w-full text-center px-4 py-2 bg-slate-900 text-white rounded text-xs font-semibold hover:bg-slate-800 shadow-sm">
+            View Match Evidence &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-lg border border-slate-200 p-12 text-center space-y-3">
+      <div class="w-12 h-12 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <h3 class="text-sm font-bold text-slate-700">No opportunity matches found matching these filters.</h3>
+      <p class="text-xs text-slate-500 max-w-sm mx-auto">
+        Adjust your score threshold or run match evaluation on newly discovered opportunities.
+      </p>
+      <div class="pt-2">
+        <a href="{% url 'matching:index' %}" class="px-4 py-2 border border-slate-300 rounded text-xs font-medium hover:bg-slate-50">Reset Filters</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="flex items-center justify-center space-x-2 pt-4">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if min_score %}&min_score={{ min_score }}{% endif %}{% if selected_eligibility %}&eligibility={{ selected_eligibility }}{% endif %}" class="px-3 py-1.5 border border-slate-200 text-xs rounded text-slate-700 hover:bg-slate-50">Previous</a>
+    {% endif %}
+    <span class="text-xs text-slate-500 font-mono">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if min_score %}&min_score={{ min_score }}{% endif %}{% if selected_eligibility %}&eligibility={{ selected_eligibility }}{% endif %}" class="px-3 py-1.5 border border-slate-200 text-xs rounded text-slate-700 hover:bg-slate-50">Next</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

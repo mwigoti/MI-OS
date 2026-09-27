@@ -12,14 +12,15 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .models import Opportunity, OpportunitySource, IngestionRun
-from .constants import OpportunityType, Sector, OpportunityStatus, SourceType
+from .models import Opportunity, OpportunitySource, IngestionRun, OpportunityIntelligence
+from .constants import OpportunityType, Sector, OpportunityStatus, SourceType, ExtractionStatus
 from .selectors import get_opportunities_queryset
 from .forms import ManualUrlIngestionForm, OpportunityEditForm
 from .services.manual_ingestion import extract_metadata_from_url
 from .services.normalization import normalize_opportunity_payload
 from .services.validation import store_or_update_opportunity
-from .tasks import refresh_opportunity_source
+from .services.deterministic_extraction import DeadlineIntelligence
+from .tasks import refresh_opportunity_source, extract_opportunity_intelligence_task
 
 
 @login_required
@@ -35,6 +36,8 @@ def opportunity_inbox_view(request):
     status = request.GET.get("status", "ACTIVE")
     source_id = request.GET.get("source", "")
     deadline_filter = request.GET.get("deadline", "")
+    extraction_status = request.GET.get("intel_status", "")
+    required_skill = request.GET.get("skill", "").strip()
     ordering = request.GET.get("order", "-posted_date")
 
     remote_bool = None
@@ -52,6 +55,8 @@ def opportunity_inbox_view(request):
         status=status,
         source_id=source_id if source_id else None,
         deadline_filter=deadline_filter,
+        extraction_status=extraction_status,
+        required_skill=required_skill,
         ordering=ordering,
     )
 
@@ -71,10 +76,13 @@ def opportunity_inbox_view(request):
         "selected_status": status,
         "selected_source": source_id,
         "deadline_filter": deadline_filter,
+        "selected_intel_status": extraction_status,
+        "selected_skill": required_skill,
         "ordering": ordering,
         "opportunity_types": OpportunityType.choices,
         "sectors": Sector.choices,
         "statuses": OpportunityStatus.choices,
+        "extraction_statuses": ExtractionStatus.choices,
         "sources": sources,
         "total_count": paginator.count,
     }
@@ -85,10 +93,42 @@ def opportunity_inbox_view(request):
 def opportunity_detail_view(request, pk):
     """
     Opportunity Detail view: structured representation clearly distinguishing
-    primary source data from MwohaOS normalized metadata.
+    primary source data, deterministic evaluations, and AI intelligence analysis.
     """
-    opportunity = get_object_or_404(Opportunity.objects.select_related("source"), pk=pk)
-    return render(request, "opportunities/detail.html", {"opportunity": opportunity})
+    opportunity = get_object_or_404(
+        Opportunity.objects.select_related("source", "intelligence"),
+        pk=pk,
+    )
+    intel = getattr(opportunity, "intelligence", None)
+    deadline_eval = DeadlineIntelligence.evaluate(opportunity.deadline, opportunity.deadline_timezone)
+
+    return render(
+        request,
+        "opportunities/detail.html",
+        {
+            "opportunity": opportunity,
+            "intelligence": intel,
+            "deadline_eval": deadline_eval,
+        },
+    )
+
+
+@login_required
+@require_POST
+def opportunity_analyze_view(request, pk):
+    """
+    Triggers asynchronous opportunity intelligence extraction via Celery.
+    Does not block request/response cycle.
+    """
+    opportunity = get_object_or_404(Opportunity, pk=pk)
+    force = request.POST.get("force") == "1"
+    extract_opportunity_intelligence_task.delay(str(opportunity.id), force=force)
+    messages.info(
+        request,
+        f"Analysis started for '{opportunity.title}'. Intelligence will update in the background.",
+    )
+    return redirect("opportunities:detail", pk=opportunity.pk)
+
 
 
 @login_required

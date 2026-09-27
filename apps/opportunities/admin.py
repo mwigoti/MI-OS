@@ -4,7 +4,67 @@ Provides searching, filtering, and readonly audit fields for Opportunity,
 OpportunitySource, and IngestionRun.
 """
 from django.contrib import admin
-from .models import Opportunity, OpportunitySource, IngestionRun
+from .models import Opportunity, OpportunitySource, IngestionRun, OpportunityIntelligence, AIUsageLog
+
+
+@admin.register(OpportunityIntelligence)
+class OpportunityIntelligenceAdmin(admin.ModelAdmin):
+    list_display = [
+        "opportunity",
+        "extraction_status",
+        "extraction_method",
+        "extraction_provider",
+        "model_name",
+        "confidence",
+        "updated_at",
+    ]
+    list_filter = [
+        "extraction_status",
+        "extraction_method",
+        "extraction_provider",
+    ]
+    search_fields = ["opportunity__title", "opportunity__organization", "summary", "opportunity_purpose"]
+    readonly_fields = [
+        "id",
+        "confidence",
+        "raw_extraction",
+        "created_at",
+        "updated_at",
+        "last_extracted_at",
+    ]
+
+
+@admin.register(AIUsageLog)
+class AIUsageLogAdmin(admin.ModelAdmin):
+    list_display = [
+        "provider",
+        "model",
+        "operation",
+        "success",
+        "input_tokens",
+        "output_tokens",
+        "latency_seconds",
+        "requested_at",
+    ]
+    list_filter = ["provider", "success", "operation"]
+    search_fields = ["provider", "model", "error_type", "error_message"]
+    readonly_fields = [
+        "id",
+        "provider",
+        "model",
+        "operation",
+        "opportunity",
+        "requested_at",
+        "completed_at",
+        "success",
+        "input_tokens",
+        "output_tokens",
+        "error_type",
+        "error_message",
+        "latency_seconds",
+        "created_at",
+        "updated_at",
+    ]
 
 
 @admin.register(Opportunity)

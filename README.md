@@ -2,7 +2,7 @@
 
 > Personal Opportunity Intelligence and Execution Operating System
 
-[![Milestone](https://img.shields.io/badge/Milestone-1%3A%20Profile%20%26%20Evidence-blue.svg)](#roadmap)
+[![Milestone](https://img.shields.io/badge/Milestone-6%3A%20AI%20Preparation-blue.svg)](#roadmap)
 [![Django](https://img.shields.io/badge/Django-5.x-darkgreen.svg)](https://www.djangoproject.com/)
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-blue.svg)](https://www.postgresql.org/)
@@ -15,7 +15,7 @@
 
 **MwohaOS** is a personal opportunity operating system designed to discover, extract, normalize, match, prepare, apply for, and track career and growth opportunities.
 
-Unlike traditional job boards or generic ATS application extensions, MwohaOS is structured around the unified concept of an **Opportunity**—spanning:
+Unlike traditional job boards, MwohaOS manages multi-spectrum opportunities across an entire professional lifecycle:
 - Full-time & contract jobs
 - Fellowships & research grants
 - Accelerators & incubator cohorts
@@ -35,168 +35,216 @@ DISCOVER → EXTRACT → NORMALIZE → DEDUPLICATE → CHECK ELIGIBILITY
 ## 2. Current Milestone
 
 ```text
-Milestone 1 — Professional Profile & Evidence System
+Milestone 4 — Matching & Recommendations
 ```
 
-Milestone 1 establishes the **professional source of truth** used by future opportunity matching and application generation systems. 
+Milestone 4 builds a transparent, evidence-grounded matching engine answering:
 
-### Core Architectural Principle
-The user's professional identity is represented as **structured, factual, evidence-backed data**. Every professional claim is traceable to primary sources:
-```text
-CLAIM
-  ↓
-EVIDENCE
-  ↓
-SOURCE (Document / Repository / URL / Institutional Record)
-```
-
-No AI reasoning, hallucinated claims, or speculative proficiency guessing is allowed. The user has complete, deterministic control over their data.
-
----
-
-## 3. Architecture & Data Models
-
-MwohaOS follows a **Django modular monolith** architecture. All profile and evidence subsystems are organized into discrete apps:
+> **"How well does this opportunity align with my professional profile, and why?"**
 
 ```text
-User (Authentication & Credentials)
- │
- └── Profile (Root Anchor for Career Identity)
-      ├── Skills (Technical, Geospatial, AI/ML, Domain proficiencies)
-      ├── Experiences (Employment, roles, and quantified outcomes)
-      ├── Education (Academic credentials and degrees)
-      ├── Projects (Applied deliverables, repositories, demos, and impact)
-      ├── Achievements (Awards, honors, fellowships, and competition wins)
-      ├── Certifications (Industry accreditations and credential IDs)
-      ├── Publications (Journals, preprints, conference papers, DOIs)
-      ├── Languages (Spoken and written proficiencies)
-      ├── Preferences (Target opportunity types, sectors, work modes)
-      ├── Versions (Audit log of profile state changes)
-      ├── Documents (Secure Vault: CVs, resumes, transcripts, certs)
-      └── Evidence Bank (Verifiable proof connecting claims to sources)
+PROFILE (Experience, Education, Skills, Projects, Preferences)
+      ↓
+PROFILE NORMALIZATION & SNAPSHOT HASH
+      ↓
+OPPORTUNITY INTELLIGENCE (Structured Eligibility, Requirements, Skills)
+      ↓
+DETERMINISTIC ELIGIBILITY CHECK (Nationality, Location, Deadlines, Hard Constraints)
+      ↓
+SKILL MATCHING (Exact, Normalized Aliases, Related Competencies)
+      ↓
+EXPERIENCE & PROJECT EVIDENCE CORRELATION
+      ↓
+EDUCATION & PROFILE PREFERENCE ALIGNMENT
+      ↓
+DETERMINISTIC WEIGHTED SCORING & HARD OVERRIDE
+      ↓
+EVIDENCE-GROUNDED FACTUAL EXPLANATION
+      ↓
+OPPORTUNITY MATCH RECORD
 ```
 
-### Discrete Apps
-- **`apps.profiles`**: Core profile entities, deterministic completeness engine, CRUD views, and evidence bank.
-- **`apps.documents`**: Isolated document vault, path sanitization, MIME/size validation, and authorized file streaming.
-- **`apps.accounts`**: User authentication, sessions, and timezone settings.
-- **`apps.core`**: Health checks, abstract base models (`TimeStampedModel`), and logging.
+---
+
+## 3. Important Product Principle & Disclaimer
+
+> **Match scores describe alignment between available profile evidence and opportunity requirements. They are not guarantees of selection, employment, funding, admission, or application success.**
+
+MwohaOS never acts as an opaque black box claiming "AI says you are a 92% fit". Instead, it reveals:
+1. Exact requirements satisfied by verified profile evidence.
+2. Requirements missing or unestablished in current records.
+3. Unconclusive or ambiguous requirements (distinguishing missing data from unqualified candidates).
+4. Factual reasons explaining eligibility determinations.
 
 ---
 
-## 4. Evidence Architecture
+## 4. Matching Dimensions & Scoring Weights
 
-The **Evidence Bank** (`apps.profiles.models.Evidence`) substantiates assertions made on applications:
-- **Direct Relations:** Explicit foreign keys link evidence to `Project`, `Experience`, `Education`, `Achievement`, `Certification`, and `Document` records.
-- **Source Verification:** Supports direct URLs (e.g. GitHub repos, DOI links, demo servers, validation portals) and attached vault documents.
-- **Verification States:** Safe default of `verified=False` until explicit validation notes and confirmation are recorded by the user.
+Transparent default weights summing to 100%:
+- **Eligibility (25%)**: Mandatory legal/geographic constraints.
+- **Required Skills (25%)**: Core technical and domain proficiencies.
+- **Experience (20%)**: Cumulative verified professional years and role alignment.
+- **Education (10%)**: Degree level (BSc, MSc, PhD) and field relevance.
+- **Sector Alignment (8%)**: Thematic synergy (e.g., Earth Observation, Geospatial, Climate, Agriculture).
+- **Opportunity Type (5%)**: Match against user target types (Fellowship, Grant, Job, Accelerator).
+- **Location & Remote (5%)**: Work mode and geographic preferences.
+- **Preferences (2%)**: Specific constraints and notes.
 
----
-
-## 5. Document Security Vault
-
-Uploaded documents (resumes, academic transcripts, government IDs) are strictly protected:
-- **Unguessable Paths:** Files are uploaded to isolated directory structures (`documents/user_<user_id>/<uuid>_<clean_filename>`).
-- **Authorization Barrier:** Documents are not served through public static directories. The `/documents/<pk>/download/` endpoint strictly enforces that `request.user.profile == document.profile`.
-- **Validation:** File uploads are limited to 10MB and restricted to allowed extensions (`.pdf`, `.docx`, `.txt`, `.rtf`, `.png`, `.jpg`, `.jpeg`, `.webp`).
-
----
-
-## 6. Deterministic Profile Completeness
-
-Profile completeness is calculated deterministically across 10 structured dimensions (weighted 0–100%):
-- **Identity & Summary** (10%)
-- **Contact & Links** (10%)
-- **Experience** (15%)
-- **Education** (10%)
-- **Skills** (15%)
-- **Projects** (15%)
-- **Achievements & Certifications** (5%)
-- **Documents** (10%)
-- **Evidence Bank** (10%)
-- **Preferences** (5%)
+### Hard Constraint Enforcement
+If explicit eligibility fails (e.g. candidate is in Kenya, but opportunity strictly requires Canadian work authorization or the deadline has passed):
+- `eligibility_status` is marked **`INELIGIBLE`**.
+- The overall score is capped to a **maximum of 35%**, preventing misleading recommendations regardless of technical skill alignment.
 
 ---
 
-## 7. URL Routes
+## 5. Data Model (`OpportunityMatch`)
 
-### Profile Subsystem (`/profile/`)
-- `GET  /profile/` — Overview dashboard with completeness score and section snapshots
-- `GET  /profile/edit/` — Update headline, summary, links, and work authorization
-- `GET/POST /profile/skills/` — Skills inventory (`/skills/add/`, `/<pk>/edit/`, `/<pk>/delete/`)
-- `GET/POST /profile/experience/` — Work history (`/experience/add/`, `/<pk>/edit/`, `/<pk>/delete/`)
-- `GET/POST /profile/education/` — Education records (`/education/add/`, `/<pk>/edit/`, `/<pk>/delete/`)
-- `GET/POST /profile/projects/` — Tangible projects (`/projects/add/`, `/<pk>/edit/`, `/<pk>/delete/`)
-- `GET/POST /profile/achievements/` — Awards & honors (`/achievements/add/`, `/<pk>/edit/`, `/<pk>/delete/`)
-- `GET/POST /profile/certifications/` — Accreditations (`/certifications/add/`, `/<pk>/edit/`, `/<pk>/delete/`)
-- `GET/POST /profile/publications/` — Papers & preprints (`/publications/add/`, `/<pk>/edit/`, `/<pk>/delete/`)
-- `GET/POST /profile/languages/` — Language competencies (`/languages/add/`, `/<pk>/edit/`, `/<pk>/delete/`)
-- `GET/POST /profile/preferences/` — Target opportunity criteria & sector constraints
-- `GET/POST /profile/evidence/` — Evidence bank & claim verification (`/evidence/add/`, `/<pk>/edit/`, `/<pk>/delete/`, `/<pk>/toggle-verify/`)
-
-### Document Vault (`/documents/`)
-- `GET  /documents/` — Document vault catalog with search and type filtering
-- `POST /documents/upload/` — Secure upload form with size and extension validation
-- `GET  /documents/<pk>/download/` — Authorized file streaming (User B cannot download User A's files)
-- `POST /documents/<pk>/delete/` — Delete document record and purge stored file
+One-to-one between `Profile` and `Opportunity`:
+- **`match_status`**: `PENDING`, `PROCESSING`, `COMPLETED`, `PARTIAL`, `FAILED`, `STALE`.
+- **`overall_score`**: Weighted 0–100 score with descriptive band labels (`Very strong alignment`, `Strong`, `Moderate`, `Partial`, `Limited`).
+- **`eligibility_status`**: `ELIGIBLE`, `INELIGIBLE`, `UNCERTAIN`, `NOT_ASSESSED`.
+- **Component Scores**: Separate fields for `skill_score`, `experience_score`, `education_score`, `sector_score`, `opportunity_type_score`, `location_score`, `preference_score`.
+- **Breakdowns**: `required_requirements_met`, `required_requirements_missing`, `matching_skills` (with `match_type` and evidence), `matching_experience`, `matching_projects`.
+- **`explanation`**: Traceable, human-readable breakdown of strengths and gaps.
+- **Stale Detection Hashes**: `profile_snapshot_hash`, `opportunity_snapshot_hash`, `intelligence_snapshot_hash` ensuring matches automatically detect updates.
 
 ---
 
-## 8. Quickstart & Installation
+## 6. Celery Background Tasks & Management Commands
 
-### Step 1: Configure Environment
+### Celery Tasks (`apps/matching/tasks.py`)
+- `match_opportunity_task`: Evaluates a single profile-opportunity pair asynchronously.
+- `match_pending_opportunities`: Bounded scheduled task evaluating newly ingested opportunities against active profiles.
+- `rematch_stale_matches`: Recomputes matches flagged as `STALE`.
+- `rematch_profile`: Recalculates all matches for a user when their profile is updated.
+
+### Management Commands
 ```bash
-cp .env.example .env
+# Match pending active opportunities
+python manage.py match_opportunities --pending --limit 20
+
+# Match single opportunity by UUID
+python manage.py match_opportunities --opportunity <uuid>
+
+# Force recalculation for all opportunities
+python manage.py match_opportunities --all --force
+
+# Recalculate match for a specific opportunity across profiles
+python manage.py rematch_opportunity <opportunity_uuid>
 ```
 
-### Step 2: Build & Start Services
-```bash
-docker compose up --build -d
-```
-Or via Makefile:
-```bash
-make setup
-```
+---
 
-### Step 3: Run Migrations & Create Superuser
-```bash
-docker compose exec web python manage.py migrate
-docker compose exec web python manage.py createsuperuser
-```
+## 7. Automated Test Suite
 
-### Step 4: Run Automated Tests
+- `tests/test_milestone_1.py`: 17 tests (Profile, Skills, Experiences, Evidence Bank).
+- `tests/test_milestone_2.py`: 16 tests (Opportunity Ingestion, Connectors, Deduplication, SSRF).
+- `tests/test_milestone_3.py`: 12 tests (Opportunity Intelligence, Hosted Providers, Prompt Injection Defense).
+- `tests/test_milestone_4.py`: 11 tests (Exact/Normalized/Related Skills, Hard Eligibility Constraints, Experience & Project Evidence, Degree Matching, Weighted Scoring, Idempotency, Management Commands, Dashboard & Detail Views).
+
+Run all tests:
 ```bash
 docker compose exec web pytest
 ```
 
 ---
 
-## 9. Automated Test Suite
+## 8. Milestone 5 — Application Workspace
 
-The automated test suite in `tests/` verifies:
-- **Profile & Ownership:** Profile creation, editing, and version logging.
-- **Skills CRUD:** Creation, update, duplicate prevention, and cross-user isolation.
-- **Date Validation:** Enforces `end_date >= start_date` for experiences, education, and certifications.
-- **Document Security:** Enforces allowed file extensions, file size limits, and verifies that User A cannot download User B's documents (HTTP 404).
-- **Evidence Bank:** Relations to projects, experiences, and verification toggles.
-- **Completeness:** Deterministic score computation on empty vs fully documented profiles.
+Milestone 5 provides a structured preparation, material tailoring, question answering, and review workspace for opportunities before execution:
+
+```text
+OPPORTUNITY MATCH / INBOX
+      ↓
+APPLICATION WORKSPACE INITIALIZATION
+      ↓
+REQUIRED DOCUMENTS AUTO-POPULATION (From OpportunityIntelligence)
+      ↓
+VAULT DOCUMENT LINKAGE & TAILORED ATTACHMENTS
+      ↓
+APPLICATION QUESTIONNAIRE & ESSAY DRAFTING (Limits & Counts)
+      ↓
+DETERMINISTIC READINESS SCORING & BLOCKER AUDITING (0–100%)
+      ↓
+USER REVIEW SIGNOFF & SUBMISSION RECORDING
+      ↓
+ACTIVITY AUDIT TRAIL
+```
+
+### Key Capabilities
+- **Lifecycle Stages**: `SAVED`, `PREPARING`, `READY_FOR_REVIEW`, `READY_TO_SUBMIT`, `SUBMITTED`, `UNDER_REVIEW`, `INTERVIEWING`, `OFFERED`, `REJECTED`, `WITHDRAWN`, `ARCHIVED`.
+- **Auto-Populated Materials**: Evaluates `OpportunityIntelligence.required_documents` to generate required attachment slots and auto-links verified primary documents from the user's Document Vault.
+- **Application Questionnaire**: Structured prompt management with category tagging, draft status, and strict real-time character/word limit enforcement.
+- **Deterministic Readiness Engine**: Evaluates mandatory document attachments, question answers, overdue deadlines, and explicit user signoff into an explainable 0–100% readiness score with submission blockers.
+- **Submission Verification**: Records submission timestamps, official portal confirmation IDs, submission method, and follow-up notes.
+- **Audit Logging**: Comprehensive `ApplicationActivity` log tracking all stage changes, uploads, and edits.
 
 ---
 
-## 10. Roadmap
+## 9. Automated Test Suite
+
+- `tests/test_milestone_1.py`: 17 tests (Profile, Skills, Experiences, Evidence Bank).
+- `tests/test_milestone_2.py`: 16 tests (Opportunity Ingestion, Connectors, Deduplication, SSRF).
+- `tests/test_milestone_3.py`: 12 tests (Opportunity Intelligence, Hosted Providers, Prompt Injection Defense).
+- `tests/test_milestone_4.py`: 11 tests (Skills Matching, Hard Constraints, Evidence Corroboration, Scoring).
+- `tests/test_milestone_5.py`: 10 tests (Workspace Init, Auto-Populated Documents, Lifecycle Transitions, Readiness Engine, Word Limits, Isolation, Management Command).
+- `tests/test_milestone_6.py`: 10 tests (Evidence Grounding, Anti-Hallucination Audit, Tailored Cover Letter, CV Tailoring & ATS Alignment, STAR Question Answering, Word/Char Limits, Version History & Rollback, Prompt Injection Boundaries, Management Command, Access Isolation).
+
+Run all tests:
+```bash
+docker compose exec web pytest
+```
+
+---
+
+## 10. Milestone 6 — AI Preparation
+
+Milestone 6 builds an evidence-grounded AI preparation studio synthesizing tailored application materials with zero hallucinations:
+
+```text
+OPPORTUNITY INTELLIGENCE + CANDIDATE PROFILE EVIDENCE
+                      ↓
+INJECTION-SAFE BOUNDARY ENCAPSULATION & ANTI-HALLUCINATION AUDIT
+                      ↓
+      ┌───────────────┼───────────────┐
+      ↓               ↓               ↓
+TAILORED COVER    CV TAILORING &    STRUCTURED QUESTION
+LETTER ENGINE     ATS OPTIMIZATION  ANSWERING (STAR METHOD)
+      ↓               ↓               ↓
+DOCUMENT VERSION  MATCH COVERAGE &  STRICT WORD & CHAR
+HISTORY & DIFFS   SELECTED PROJECTS LIMIT ENFORCEMENT
+      └───────────────┬───────────────┘
+                      ↓
+WORKSPACE DOCUMENT ATTACHMENT & READINESS ENGINE RECALCULATION
+                      ↓
+ACTIVITY AUDIT LOG (AI_GENERATION) & USER REVIEW WORKSPACE
+```
+
+### Key Capabilities
+- **Strict Evidence Grounding & Anti-Hallucination**: Materials cite only verified facts from candidate profile records (skills, experiences, projects, degrees).
+- **Prompt Injection Defense**: Boundary markers (`BEGIN UNTRUSTED OPPORTUNITY CONTENT` / `BEGIN CANDIDATE PROFILE EVIDENCE`) safeguard LLM execution.
+- **Tailored Cover Letter Synthesis**: Role-specific opening, core technical alignment, quantified achievement proof, and professional closing with version history and 1-click rollback.
+- **CV Tailoring & ATS Optimization**: Targeted summary, prioritized skill rankings (exact vs related), tailored accomplishment bullets with action verbs, and ATS keyword match scoring.
+- **STAR Framework Question Answering**: Situation, Task, Action, Result structured answers with guaranteed compliance to strict word and character limits.
+- **Interactive AI Studio UI & CLI Management**: Dedicated preparation studio tab and `python manage.py ai_prep_application --application <uuid> --all` CLI command.
+
+---
+
+## 11. Roadmap
 
 ```text
 Milestone 0  — Foundation                                  [COMPLETE]
 Milestone 1  — Professional Profile & Evidence System     [COMPLETE]
-Milestone 2  — Opportunity Discovery & Ingestion          [NEXT]
-Milestone 3  — Intelligence & Normalization
-Milestone 4  — Matching & Scoring
-Milestone 5  — Application Workspace
-Milestone 6  — AI Preparation
-Milestone 7  — Browser Agent
+Milestone 2  — Opportunity Discovery & Ingestion          [COMPLETE]
+Milestone 3  — Intelligence & AI-Assisted Extraction      [COMPLETE]
+Milestone 4  — Matching & Recommendations                 [COMPLETE]
+Milestone 5  — Application Workspace                      [COMPLETE]
+Milestone 6  — AI Preparation                              [COMPLETE]
+Milestone 7  — Browser Agent                              [NEXT]
 Milestone 8  — Submission Engine
 Milestone 9  — Tracking & Status
 Milestone 10 — Communication Intelligence
 Milestone 11 — Opportunity Intelligence
 Milestone 12 — Personal Agent
 ```
+

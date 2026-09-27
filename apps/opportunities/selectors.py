@@ -18,13 +18,16 @@ def get_opportunities_queryset(
     status: str = "",
     source_id: Optional[str] = None,
     deadline_filter: str = "",
+    extraction_status: str = "",
+    required_skill: str = "",
+    required_doc: str = "",
     ordering: str = "-posted_date",
 ) -> QuerySet[Opportunity]:
     """
     Returns an optimized queryset for the Opportunity Inbox with full search,
-    filters, and sorting.
+    filters, intelligence facets, and sorting.
     """
-    qs = Opportunity.objects.select_related("source").all()
+    qs = Opportunity.objects.select_related("source", "intelligence").all()
 
     # Search filter
     if query:
@@ -33,7 +36,9 @@ def get_opportunities_queryset(
             Q(title__icontains=query) |
             Q(organization__icontains=query) |
             Q(description__icontains=query) |
-            Q(preferred_skills__icontains=query)
+            Q(preferred_skills__icontains=query) |
+            Q(intelligence__summary__icontains=query) |
+            Q(intelligence__opportunity_purpose__icontains=query)
         )
 
     # Opportunity Type
@@ -61,6 +66,21 @@ def get_opportunities_queryset(
     # Source
     if source_id:
         qs = qs.filter(source_id=source_id)
+
+    # Extraction Status
+    if extraction_status:
+        qs = qs.filter(intelligence__extraction_status=extraction_status)
+
+    # Required Skill filter
+    if required_skill:
+        qs = qs.filter(
+            Q(preferred_skills__icontains=required_skill) |
+            Q(intelligence__required_skills__icontains=required_skill)
+        )
+
+    # Required Document filter
+    if required_doc:
+        qs = qs.filter(intelligence__required_documents__icontains=required_doc)
 
     # Deadline Filter
     now = timezone.now()

@@ -1,0 +1,648 @@
+{% extends "base.html" %}
+
+{% block title %}{{ application.display_title }} — Application Workspace{% endblock %}
+{% block header_title %}Application Workspace{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+
+  <!-- Top Navigation & Action Toolbar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <a href="{% url 'applications:index' %}" class="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-slate-800">
+      &larr; Back to Applications Workspace
+    </a>
+    
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Milestone 6 AI Preparation Studio CTA -->
+      <a href="{% url 'applications:ai_prep' application.pk %}" class="px-3.5 py-1.5 bg-gradient-to-r from-blue-700 to-indigo-700 text-white rounded text-xs font-semibold hover:from-blue-800 hover:to-indigo-800 shadow-sm flex items-center space-x-1.5 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>AI Preparation Studio &rarr;</span>
+      </a>
+
+      {% if application.match %}
+      <a href="{% url 'matching:detail' application.match.pk %}" class="px-3 py-1.5 border border-purple-300 text-purple-700 bg-purple-50 rounded text-xs font-semibold hover:bg-purple-100 flex items-center">
+        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Match Fit: {{ application.match.overall_score|floatformat:0 }}%
+      </a>
+      {% endif %}
+
+      <a href="{% url 'opportunities:detail' application.opportunity.pk %}" class="px-3 py-1.5 border border-slate-300 text-slate-700 bg-white rounded text-xs font-semibold hover:bg-slate-50 flex items-center">
+        Opportunity Intelligence &rarr;
+      </a>
+
+      {% if application.portal_url or application.opportunity.application_url %}
+      <a href="{% if application.portal_url %}{{ application.portal_url }}{% else %}{{ application.opportunity.application_url }}{% endif %}" 
+         target="_blank" rel="noopener" 
+         class="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-sm flex items-center">
+        <span>Apply on Official Portal</span>
+        <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Header Card -->
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+      <div class="space-y-2 flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Status Dropdown Form -->
+          <form action="{% url 'applications:update_status' application.pk %}" method="post" class="inline-flex items-center">
+            {% csrf_token %}
+            <label class="text-[10px] font-mono text-slate-400 uppercase mr-1.5">Stage:</label>
+            <select name="status" onchange="this.form.submit()" 
+                    class="rounded-md border-slate-300 text-xs font-bold font-mono py-1 focus:ring-blue-500 focus:border-blue-500 
+                    {% if application.status == 'SUBMITTED' %}text-emerald-700 bg-emerald-50 border-emerald-300{% elif application.status == 'PREPARING' %}text-blue-700 bg-blue-50 border-blue-300{% elif application.status == 'READY_TO_SUBMIT' %}text-purple-700 bg-purple-50 border-purple-300{% else %}text-slate-800 bg-slate-50{% endif %}">
+              {% for val, label in statuses %}
+              <option value="{{ val }}" {% if application.status == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </form>
+
+          <!-- Priority -->
+          <span class="px-2 py-0.5 rounded text-[11px] font-mono
+            {% if application.priority == 'URGENT' %}bg-rose-50 text-rose-700 border border-rose-200 font-bold
+            {% elif application.priority == 'HIGH' %}bg-amber-50 text-amber-700 border border-amber-200 font-semibold
+            {% elif application.priority == 'MEDIUM' %}bg-blue-50 text-blue-700 border border-blue-200
+            {% else %}bg-slate-50 text-slate-600 border border-slate-200{% endif %}">
+            {{ application.get_priority_display }}
+          </span>
+
+          <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-mono">
+            {{ application.opportunity.get_opportunity_type_display }}
+          </span>
+        </div>
+
+        <h1 class="text-xl font-bold text-slate-900 leading-snug">
+          {{ application.display_title }}
+        </h1>
+
+        <div class="flex flex-wrap items-center gap-4 text-xs text-slate-600">
+          {% if application.display_organization %}
+          <span class="font-medium text-slate-800 flex items-center">
+            <svg class="w-4 h-4 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            {{ application.display_organization }}
+          </span>
+          {% endif %}
+
+          {% if application.active_deadline %}
+          <span class="flex items-center {% if application.is_overdue %}text-rose-600 font-bold{% elif application.days_remaining and application.days_remaining <= 5 %}text-amber-600 font-semibold{% endif %}">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Target Deadline: {{ application.active_deadline|date:"F d, Y" }}
+            {% if application.days_remaining is not None %}
+              <span class="ml-1 text-[11px] font-mono">({{ application.days_remaining }} days left)</span>
+            {% endif %}
+          </span>
+          {% endif %}
+
+          {% if application.submitted_at %}
+          <span class="text-emerald-700 flex items-center font-medium">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Submitted {{ application.submitted_at|date:"M d, Y" }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Readiness Widget -->
+      <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 min-w-[220px] text-right space-y-2">
+        <span class="text-[10px] font-mono uppercase text-slate-500 block">Submission Readiness</span>
+        <div class="flex items-center justify-end space-x-2">
+          <div class="w-28 bg-slate-200 rounded-full h-2.5 overflow-hidden">
+            <div class="h-full rounded-full {% if readiness.readiness_score >= 80 %}bg-emerald-500{% elif readiness.readiness_score >= 50 %}bg-amber-500{% else %}bg-slate-400{% endif %}" 
+                 style="width: {{ readiness.readiness_score }}%"></div>
+          </div>
+          <span class="text-lg font-bold font-mono {% if readiness.readiness_score >= 80 %}text-emerald-700{% else %}text-slate-800{% endif %}">
+            {{ readiness.readiness_score }}%
+          </span>
+        </div>
+        <div class="text-[11px] font-medium {% if readiness.is_ready_to_submit %}text-emerald-700{% else %}text-slate-500{% endif %}">
+          {% if readiness.is_ready_to_submit %}
+          ✓ Ready for Final Submission
+          {% else %}
+          Needs Material Preparation
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Strategy Notes (if any) -->
+    {% if application.strategy_notes %}
+    <div class="p-3 bg-blue-50/50 border border-blue-100 rounded text-xs text-slate-700 space-y-1">
+      <span class="font-bold text-blue-900 block font-mono text-[11px]">Positioning Strategy & Notes:</span>
+      <p class="whitespace-pre-line">{{ application.strategy_notes }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Readiness & Verification Panel -->
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
+      <div>
+        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Readiness & Submission Checklist</h2>
+        <p class="text-xs text-slate-500">Deterministic check of all materials, answers, and candidate approval.</p>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <!-- Signoff Review Button -->
+        <form action="{% url 'applications:signoff' application.pk %}" method="post" class="inline">
+          {% csrf_token %}
+          {% if application.user_review_completed %}
+          <button type="submit" class="px-3 py-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded text-xs font-semibold hover:bg-emerald-100 flex items-center">
+            <svg class="w-4 h-4 mr-1.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Review Signed Off (Click to Revoke)
+          </button>
+          {% else %}
+          <button type="submit" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded text-xs font-semibold hover:bg-slate-50 shadow-sm flex items-center">
+            <svg class="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Complete User Review Signoff
+          </button>
+          {% endif %}
+        </form>
+
+        <!-- Record Submission Button -->
+        <button onclick="document.getElementById('submission-drawer').scrollIntoView({behavior: 'smooth'})" 
+                class="px-3.5 py-1.5 bg-slate-900 text-white rounded text-xs font-semibold hover:bg-blue-600 shadow-sm">
+          Record Submission &rarr;
+        </button>
+      </div>
+    </div>
+
+    <!-- Checklist Breakdown Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
+      <div class="p-3 rounded border {% if readiness.missing_documents %}border-amber-200 bg-amber-50/40{% else %}border-emerald-200 bg-emerald-50/40{% endif %}">
+        <span class="font-bold text-slate-800 block">Required Documents</span>
+        <span class="text-slate-600 mt-1 block">
+          {{ readiness.required_documents_attached }} / {{ readiness.required_documents_total }} Attached
+        </span>
+        <span class="text-[11px] font-mono mt-1 block {% if readiness.missing_documents %}text-amber-700 font-semibold{% else %}text-emerald-700{% endif %}">
+          {% if readiness.missing_documents %}{{ readiness.missing_documents|length }} Missing{% else %}✓ All Attached{% endif %}
+        </span>
+      </div>
+
+      <div class="p-3 rounded border {% if readiness.unanswered_questions %}border-amber-200 bg-amber-50/40{% else %}border-emerald-200 bg-emerald-50/40{% endif %}">
+        <span class="font-bold text-slate-800 block">Application Questions</span>
+        <span class="text-slate-600 mt-1 block">
+          {{ questions|length }} Prompt{{ questions|length|pluralize }}
+        </span>
+        <span class="text-[11px] font-mono mt-1 block {% if readiness.unanswered_questions %}text-amber-700 font-semibold{% else %}text-emerald-700{% endif %}">
+          {% if readiness.unanswered_questions %}{{ readiness.unanswered_questions|length }} Pending{% else %}✓ All Answered{% endif %}
+        </span>
+      </div>
+
+      <div class="p-3 rounded border {% if application.user_review_completed %}border-emerald-200 bg-emerald-50/40{% else %}border-slate-200 bg-slate-50{% endif %}">
+        <span class="font-bold text-slate-800 block">User Signoff</span>
+        <span class="text-slate-600 mt-1 block">
+          {% if application.user_review_completed %}Signed off on {{ application.user_reviewed_at|date:"M d" }}{% else %}Pending verification{% endif %}
+        </span>
+        <span class="text-[11px] font-mono mt-1 block {% if application.user_review_completed %}text-emerald-700{% else %}text-slate-500{% endif %}">
+          {% if application.user_review_completed %}✓ Approved{% else %}Action Required{% endif %}
+        </span>
+      </div>
+
+      <div class="p-3 rounded border {% if application.is_overdue %}border-rose-200 bg-rose-50/40{% else %}border-blue-200 bg-blue-50/40{% endif %}">
+        <span class="font-bold text-slate-800 block">Deadline Status</span>
+        <span class="text-slate-600 mt-1 block">
+          {% if application.active_deadline %}{{ application.active_deadline|date:"M d, Y" }}{% else %}No deadline set{% endif %}
+        </span>
+        <span class="text-[11px] font-mono mt-1 block {% if application.is_overdue %}text-rose-700 font-bold{% else %}text-blue-700{% endif %}">
+          {% if application.is_overdue %}Expired{% elif application.days_remaining is not None %}{{ application.days_remaining }} days remaining{% else %}Open Timeline{% endif %}
+        </span>
+      </div>
+    </div>
+
+    <!-- Blockers / Warnings -->
+    {% if readiness.blockers %}
+    <div class="p-3 rounded bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-1">
+      <span class="font-bold block">Submission Blockers ({{ readiness.blockers|length }}):</span>
+      <ul class="list-disc list-inside space-y-0.5">
+        {% for b in readiness.blockers %}
+        <li>{{ b }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if readiness.warnings and not readiness.blockers %}
+    <div class="p-3 rounded bg-amber-50 border border-amber-200 text-xs text-amber-800 space-y-1">
+      <span class="font-bold block">Warnings:</span>
+      <ul class="list-disc list-inside space-y-0.5">
+        {% for w in readiness.warnings %}
+        <li>{{ w }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- SECTION 1: Required Documents & Materials Checklist -->
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+      <div>
+        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Required Materials & Attachments</h2>
+        <p class="text-xs text-slate-500">Attach documents from your Document Vault or upload opportunity-tailored files.</p>
+      </div>
+      <button onclick="document.getElementById('attach-doc-modal').classList.toggle('hidden')" 
+              class="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-sm flex items-center">
+        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        + Attach Document
+      </button>
+    </div>
+
+    <!-- Attach Document Form Panel (Collapsible) -->
+    <div id="attach-doc-modal" class="hidden p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
+      <h3 class="text-xs font-bold text-slate-900 uppercase">Attach or Upload Document Slot</h3>
+      <form action="{% url 'applications:document_add' application.pk %}" method="post" enctype="multipart/form-data" class="space-y-3">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Title / Slot Name</label>
+            {{ doc_form.title }}
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Document Role</label>
+            {{ doc_form.document_role }}
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Select from Document Vault</label>
+            {{ doc_form.document }}
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Or Direct File Upload</label>
+            {{ doc_form.file }}
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-medium text-slate-700 mb-1">Tailored Notes</label>
+            {{ doc_form.tailored_notes }}
+          </div>
+        </div>
+        <div class="flex items-center space-x-4 pt-1">
+          <label class="flex items-center text-xs text-slate-700">
+            {{ doc_form.is_required }}
+            <span class="ml-2 font-medium">Mandatory for Submission</span>
+          </label>
+          <label class="flex items-center text-xs text-slate-700">
+            {{ doc_form.is_tailored }}
+            <span class="ml-2 font-medium">Customized / Tailored for Role</span>
+          </label>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="document.getElementById('attach-doc-modal').classList.add('hidden')" class="px-3 py-1.5 border border-slate-300 rounded text-xs text-slate-700 hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700">Attach Document</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Document List Table -->
+    {% if documents %}
+    <div class="divide-y divide-slate-100">
+      {% for doc in documents %}
+      <div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="space-y-1 flex-1">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-bold text-slate-900">{{ doc.title }}</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+              {{ doc.get_document_role_display }}
+            </span>
+            {% if doc.is_required %}
+            <span class="text-[10px] font-mono font-semibold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+              Required
+            </span>
+            {% endif %}
+            {% if doc.is_tailored %}
+            <span class="text-[10px] font-mono font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+              Tailored
+            </span>
+            {% endif %}
+          </div>
+
+          <div class="flex items-center space-x-3 text-xs text-slate-500">
+            {% if doc.document %}
+            <span class="flex items-center text-blue-600">
+              <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Linked Vault: {{ doc.document.title }} (v{{ doc.document.version }})
+            </span>
+            {% elif doc.file %}
+            <span class="flex items-center text-slate-700 font-mono">
+              Direct File: {{ doc.effective_filename }}
+            </span>
+            {% else %}
+            <span class="text-amber-600 font-medium">⚠️ No file attached yet</span>
+            {% endif %}
+
+            {% if doc.tailored_notes %}
+            <span class="text-slate-400 italic">"{{ doc.tailored_notes }}"</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          {% if doc.has_file and doc.effective_file_url %}
+          <a href="{{ doc.effective_file_url }}" target="_blank" rel="noopener" class="px-2.5 py-1 text-xs border border-slate-300 rounded text-slate-700 hover:bg-slate-50 flex items-center">
+            <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download
+          </a>
+          {% endif %}
+
+          <form action="{% url 'applications:document_delete' application.pk doc.pk %}" method="post" class="inline" onsubmit="return confirm('Remove this document attachment?')">
+            {% csrf_token %}
+            <button type="submit" class="p-1 text-slate-400 hover:text-rose-600 rounded">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-xs text-slate-500 py-3 italic">No document attachments or required files added yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- SECTION 2: Application Questionnaire & Response Drafts -->
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+      <div>
+        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Application Questions & Draft Answers</h2>
+        <p class="text-xs text-slate-500">Draft responses, track word/character limits, and refine positioning for portal entry.</p>
+      </div>
+      <button onclick="document.getElementById('add-question-drawer').classList.toggle('hidden')" 
+              class="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700 shadow-sm flex items-center">
+        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        + Add Question Prompt
+      </button>
+    </div>
+
+    <!-- Add Question Drawer (Collapsible) -->
+    <div id="add-question-drawer" class="hidden p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
+      <h3 class="text-xs font-bold text-slate-900 uppercase">Add Application Prompt</h3>
+      <form action="{% url 'applications:question_add' application.pk %}" method="post" class="space-y-3">
+        {% csrf_token %}
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">Question / Prompt Text</label>
+          {{ question_form.question_text }}
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Category</label>
+            {{ question_form.category }}
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Max Words</label>
+            {{ question_form.max_words }}
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Max Characters</label>
+            {{ question_form.max_characters }}
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">Initial Answer Draft (Optional)</label>
+          {{ question_form.answer_draft }}
+        </div>
+        <div class="flex items-center space-x-2">
+          {{ question_form.is_required }}
+          <label class="text-xs text-slate-700 font-medium">Mandatory Question</label>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="document.getElementById('add-question-drawer').classList.add('hidden')" class="px-3 py-1.5 border border-slate-300 rounded text-xs text-slate-700 hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700">Save Question</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Questions List & Inline Editor -->
+    {% if questions %}
+    <div class="space-y-4">
+      {% for q in questions %}
+      <div class="p-4 rounded-lg border border-slate-200 bg-slate-50/60 space-y-3">
+        <form action="{% url 'applications:question_edit' application.pk q.pk %}" method="post" class="space-y-2">
+          {% csrf_token %}
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-bold text-slate-900 font-mono">Q{{ forloop.counter }}:</span>
+                <span class="text-xs font-semibold text-slate-800">{{ q.question_text }}</span>
+              </div>
+              <div class="flex items-center space-x-2 text-[11px] font-mono text-slate-500">
+                <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600">{{ q.get_category_display }}</span>
+                {% if q.is_required %}
+                <span class="text-rose-600 font-bold">• Mandatory</span>
+                {% endif %}
+                {% if q.max_words %}
+                <span>Max: {{ q.max_words }} words</span>
+                {% endif %}
+                {% if q.max_characters %}
+                <span>Max: {{ q.max_characters }} chars</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <select name="status" class="rounded text-xs border-slate-300 py-1 font-mono">
+                <option value="NOT_STARTED" {% if q.status == 'NOT_STARTED' %}selected{% endif %}>Not Started</option>
+                <option value="IN_PROGRESS" {% if q.status == 'IN_PROGRESS' %}selected{% endif %}>Drafting</option>
+                <option value="READY_FOR_REVIEW" {% if q.status == 'READY_FOR_REVIEW' %}selected{% endif %}>Draft Ready</option>
+                <option value="FINAL" {% if q.status == 'FINAL' %}selected{% endif %}>Finalized</option>
+              </select>
+
+              <button type="submit" class="px-3 py-1 bg-slate-800 text-white rounded text-xs font-semibold hover:bg-slate-900">
+                Save Draft
+              </button>
+            </div>
+          </div>
+
+          <!-- Hidden required field values for model form update -->
+          <input type="hidden" name="question_text" value="{{ q.question_text }}">
+          <input type="hidden" name="category" value="{{ q.category }}">
+          {% if q.is_required %}<input type="hidden" name="is_required" value="on">{% endif %}
+          {% if q.max_words %}<input type="hidden" name="max_words" value="{{ q.max_words }}">{% endif %}
+          {% if q.max_characters %}<input type="hidden" name="max_characters" value="{{ q.max_characters }}">{% endif %}
+
+          <textarea name="answer_draft" rows="4" 
+                    placeholder="Type or paste draft answer here..." 
+                    class="w-full rounded-md border-slate-300 text-xs text-slate-800 shadow-sm focus:ring-blue-500 focus:border-blue-500">{{ q.answer_draft }}</textarea>
+
+          <div class="flex items-center justify-between text-[11px] font-mono">
+            <div class="flex items-center space-x-3 text-slate-500">
+              <span class="{% if q.max_words and q.word_count > q.max_words %}text-rose-600 font-bold{% endif %}">
+                Words: {{ q.word_count }}{% if q.max_words %} / {{ q.max_words }}{% endif %}
+              </span>
+              <span class="{% if q.max_characters and q.char_count > q.max_characters %}text-rose-600 font-bold{% endif %}">
+                Characters: {{ q.char_count }}{% if q.max_characters %} / {{ q.max_characters }}{% endif %}
+              </span>
+            </div>
+
+            <div>
+              <a href="{% url 'applications:question_delete' application.pk q.pk %}" 
+                 onclick="return confirm('Delete this question?')" 
+                 class="text-slate-400 hover:text-rose-600 text-xs">
+                Delete Question
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-xs text-slate-500 py-3 italic">No application questions recorded yet. Add prompts to draft motivation statements and answers.</p>
+    {% endif %}
+  </div>
+
+  <!-- SECTION 3: Workspace Notes, Contacts & Journal -->
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+      <div>
+        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Workspace Notes & Contacts</h2>
+        <p class="text-xs text-slate-500">Internal research findings, recruiter contacts, and interview preparation notes.</p>
+      </div>
+      <button onclick="document.getElementById('add-note-drawer').classList.toggle('hidden')" 
+              class="px-3 py-1.5 border border-slate-300 text-slate-700 rounded text-xs font-semibold hover:bg-slate-50 shadow-sm flex items-center">
+        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        + Add Note
+      </button>
+    </div>
+
+    <!-- Add Note Drawer (Collapsible) -->
+    <div id="add-note-drawer" class="hidden p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-3">
+      <form action="{% url 'applications:note_add' application.pk %}" method="post" class="space-y-3">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Title</label>
+            {{ note_form.title }}
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-700 mb-1">Category</label>
+            {{ note_form.category }}
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">Content</label>
+          {{ note_form.content }}
+        </div>
+        <div class="flex items-center space-x-2">
+          {{ note_form.is_pinned }}
+          <label class="text-xs text-slate-700 font-medium">Pin Note to Top</label>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="document.getElementById('add-note-drawer').classList.add('hidden')" class="px-3 py-1.5 border border-slate-300 rounded text-xs text-slate-700 hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700">Save Note</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Notes List -->
+    {% if notes %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {% for note in notes %}
+      <div class="p-3.5 rounded border border-slate-200 bg-slate-50 space-y-2 relative">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            {% if note.is_pinned %}
+            <span class="text-amber-500 font-bold" title="Pinned Note">★</span>
+            {% endif %}
+            <span class="text-xs font-bold text-slate-900">{{ note.title|default:note.get_category_display }}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-[10px] font-mono text-slate-400">{{ note.created_at|date:"M d, Y" }}</span>
+            <form action="{% url 'applications:note_delete' application.pk note.pk %}" method="post" class="inline" onsubmit="return confirm('Delete this note?')">
+              {% csrf_token %}
+              <button type="submit" class="text-slate-400 hover:text-rose-600">×</button>
+            </form>
+          </div>
+        </div>
+        <p class="text-xs text-slate-700 whitespace-pre-line leading-relaxed">{{ note.content }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-xs text-slate-500 italic">No notes recorded for this workspace.</p>
+    {% endif %}
+  </div>
+
+  <!-- SECTION 4: Submission Recording & Verification -->
+  <div id="submission-drawer" class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-4">
+    <div class="border-b border-slate-100 pb-3">
+      <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Record Official Submission</h2>
+      <p class="text-xs text-slate-500">Record confirmation receipts, submission timestamp, and follow-up details once submitted.</p>
+    </div>
+
+    <form action="{% url 'applications:record_submission' application.pk %}" method="post" class="space-y-4">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">Submission Channel</label>
+          {{ submission_form.submission_method }}
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">Confirmation Code / Application ID</label>
+          {{ submission_form.submission_confirmation_code }}
+        </div>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-medium text-slate-700 mb-1">Submission Confirmation Notes / Receipt</label>
+          {{ submission_form.submission_notes }}
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        {% if application.submitted_at %}
+        <span class="text-xs text-emerald-700 font-medium">
+          ✓ Currently submitted at {{ application.submitted_at|date:"F d, Y H:i" }}
+        </span>
+        {% else %}
+        <span class="text-xs text-slate-500">
+          Marking submission will transition application stage to <strong>Submitted</strong>.
+        </span>
+        {% endif %}
+
+        <button type="submit" class="px-5 py-2 bg-emerald-600 text-white rounded text-xs font-semibold hover:bg-emerald-700 shadow-sm">
+          Save Submission Record
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- SECTION 5: Activity Audit Trail -->
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm space-y-3">
+    <h2 class="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2">
+      Workspace Activity Log & Audit Trail
+    </h2>
+    {% if activities %}
+    <div class="space-y-2">
+      {% for act in activities %}
+      <div class="flex items-start justify-between text-xs py-1 border-b border-slate-50 last:border-0">
+        <div class="flex items-center space-x-2">
+          <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
+            {{ act.get_activity_type_display }}
+          </span>
+          <span class="text-slate-700">{{ act.description }}</span>
+        </div>
+        <span class="text-[11px] font-mono text-slate-400 whitespace-nowrap ml-4">
+          {{ act.created_at|date:"M d, H:i" }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-xs text-slate-400 italic">No activity entries recorded yet.</p>
+    {% endif %}
+  </div>
+
+  <!-- Danger Zone -->
+  <div class="p-4 rounded-lg border border-rose-200 bg-rose-50/30 flex items-center justify-between">
+    <div>
+      <h3 class="text-xs font-bold text-rose-900">Delete Application Workspace</h3>
+      <p class="text-[11px] text-rose-700">Deletes this application record, answers, and attachments. Does not delete Document Vault files or the original opportunity.</p>
+    </div>
+    <form action="{% url 'applications:delete' application.pk %}" method="post" onsubmit="return confirm('Permanently delete this application workspace?')">
+      {% csrf_token %}
+      <button type="submit" class="px-3 py-1.5 bg-rose-600 text-white rounded text-xs font-semibold hover:bg-rose-700">
+        Delete Workspace
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

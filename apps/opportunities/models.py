@@ -162,3 +162,125 @@ class IngestionRun(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"Run {self.id} for {self.source.name} [{self.status}]"
+
+
+class OpportunityIntelligence(TimeStampedModel):
+    """
+    Structured intelligence record derived from deterministic and AI extraction.
+    Maintains a 1-to-1 relationship with Opportunity.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    opportunity = models.OneToOneField(
+        Opportunity,
+        on_delete=models.CASCADE,
+        related_name="intelligence",
+        help_text="The opportunity analyzed.",
+    )
+    summary = models.TextField(blank=True, help_text="Executive summary of the opportunity.")
+    organization_summary = models.TextField(blank=True, help_text="Background and mission of host entity.")
+    opportunity_purpose = models.TextField(blank=True, help_text="Objective, problem addressed, or goal.")
+    who_should_apply = models.JSONField(default=list, blank=True, help_text="Target applicant personas / demographics.")
+    responsibilities = models.JSONField(default=list, blank=True, help_text="Key duties, tasks, or project milestones.")
+    required_requirements = models.JSONField(default=list, blank=True, help_text="Mandatory qualifications / prerequisites.")
+    preferred_requirements = models.JSONField(default=list, blank=True, help_text="Bonus / nice-to-have qualifications.")
+    eligibility = models.JSONField(default=dict, blank=True, help_text="Structured eligibility parameters (nationality, education, etc.).")
+    required_documents = models.JSONField(default=list, blank=True, help_text="Document checklist (CV, Proposal, Letters, etc.).")
+    required_experience = models.JSONField(default=list, blank=True, help_text="Years of experience and domain track record.")
+    required_skills = models.JSONField(default=list, blank=True, help_text="Mandatory technical, domain, or soft skills.")
+    preferred_skills = models.JSONField(default=list, blank=True, help_text="Preferred / secondary skills.")
+    benefits = models.JSONField(default=list, blank=True, help_text="Funding, stipends, equity, mentoring, or perks.")
+    compensation_details = models.CharField(max_length=500, blank=True, help_text="Detailed compensation or prize structure.")
+    location_details = models.CharField(max_length=500, blank=True, help_text="Specific geographic or venue constraints.")
+    remote_details = models.CharField(max_length=500, blank=True, help_text="Remote policy (fully remote, timezones, hybrid).")
+    application_process = models.JSONField(default=list, blank=True, help_text="Step-by-step application workflow.")
+    important_dates = models.JSONField(default=list, blank=True, help_text="Key timeline events (opens, review, start date).")
+    application_instructions = models.JSONField(default=list, blank=True, help_text="Submission rules, portal links, or email guidelines.")
+
+    confidence = models.FloatField(default=0.0, help_text="Extraction confidence score (0.0 to 1.0). Never a fit/match score.")
+
+    extraction_status = models.CharField(
+        max_length=50,
+        choices=[
+            ("PENDING", "Pending"),
+            ("PROCESSING", "Processing"),
+            ("COMPLETED", "Completed"),
+            ("PARTIAL", "Partial"),
+            ("FAILED", "Failed"),
+        ],
+        default="PENDING",
+        db_index=True,
+    )
+    extraction_method = models.CharField(
+        max_length=50,
+        choices=[
+            ("DETERMINISTIC", "Deterministic"),
+            ("AI", "AI-Assisted"),
+            ("HYBRID", "Hybrid"),
+            ("MANUAL", "Manual"),
+        ],
+        default="DETERMINISTIC",
+    )
+    extraction_provider = models.CharField(
+        max_length=50,
+        choices=[
+            ("NONE", "None (Deterministic Only)"),
+            ("GEMINI", "Google Gemini"),
+            ("HUGGINGFACE", "Hugging Face Inference"),
+        ],
+        default="NONE",
+    )
+    model_name = models.CharField(max_length=100, blank=True, help_text="Exact LLM model name used.")
+    extraction_version = models.CharField(max_length=50, default="v1.0", help_text="Schema extraction version for cache invalidation.")
+
+    raw_extraction = models.JSONField(default=dict, blank=True, help_text="Full structured JSON returned by extraction engine.")
+    extraction_error = models.TextField(blank=True, help_text="Any error message encountered during analysis.")
+
+    last_extracted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Opportunity Intelligence"
+        verbose_name_plural = "Opportunity Intelligence Records"
+        ordering = ["-updated_at"]
+
+    def __str__(self) -> str:
+        return f"Intelligence: {self.opportunity.title} [{self.extraction_status}]"
+
+
+class AIUsageLog(TimeStampedModel):
+    """
+    Audit log tracking AI provider invocations, model latency, token counts, and errors.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    provider = models.CharField(max_length=50, db_index=True, help_text="Provider used (gemini, huggingface).")
+    model = models.CharField(max_length=100, help_text="Model identifier.")
+    operation = models.CharField(max_length=100, default="extract_opportunity")
+    opportunity = models.ForeignKey(
+        Opportunity,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ai_usage_logs",
+    )
+    requested_at = models.DateTimeField(default=timezone.now)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    success = models.BooleanField(default=False)
+    input_tokens = models.PositiveIntegerField(null=True, blank=True)
+    output_tokens = models.PositiveIntegerField(null=True, blank=True)
+    error_type = models.CharField(max_length=100, blank=True)
+    error_message = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "AI Usage Log"
+        verbose_name_plural = "AI Usage Logs"
+        ordering = ["-requested_at"]
+
+    @property
+    def latency_seconds(self) -> float:
+        if self.completed_at and self.requested_at:
+            return round((self.completed_at - self.requested_at).total_seconds(), 2)
+        return 0.0
+
+    def __str__(self) -> str:
+        status_str = "Success" if self.success else "Failed"
+        return f"{self.provider}:{self.model} - {self.operation} [{status_str}]"
+

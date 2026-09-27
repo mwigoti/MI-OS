@@ -1,6 +1,6 @@
 {
   "name": "MwohaOS",
-  "description": "Personal opportunity intelligence and execution platform — Milestone 0 Foundation.",
+  "description": "Personal opportunity intelligence and execution platform — Milestone 6 AI Preparation.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

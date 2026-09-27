@@ -74,3 +74,71 @@ def expire_past_opportunities():
     count = expire_stale_opportunities()
     logger.info(f"Marked {count} opportunities as expired.")
     return {"expired_count": count}
+
+
+@shared_task(name="apps.opportunities.tasks.extract_opportunity_intelligence_task", bind=True, max_retries=2)
+def extract_opportunity_intelligence_task(self, opportunity_id: str, force: bool = False):
+    """
+    Asynchronous, retryable task to process intelligence for a single Opportunity.
+    """
+    from apps.opportunities.models import Opportunity
+    from apps.opportunities.services.intelligence import process_opportunity_intelligence
+
+    try:
+        opp = Opportunity.objects.get(id=opportunity_id)
+        intel = process_opportunity_intelligence(opp, force_refresh=force)
+        return {
+            "opportunity_id": str(opp.id),
+            "status": intel.extraction_status,
+            "method": intel.extraction_method,
+            "provider": intel.extraction_provider,
+            "confidence": intel.confidence,
+        }
+    except Opportunity.DoesNotExist:
+        logger.error(f"Opportunity {opportunity_id} not found for intelligence processing.")
+        return {"error": "Not found"}
+    except Exception as e:
+        logger.error(f"Intelligence processing task failed for {opportunity_id}: {e}", exc_info=True)
+        raise self.retry(exc=e, countdown=10)
+
+
+@shared_task(name="apps.opportunities.tasks.process_pending_intelligence")
+def process_pending_intelligence():
+    """
+    Scheduled batch task to process pending opportunities up to batch limit.
+    Ensures free API quotas are preserved and never oversubscribed.
+    """
+    from django.conf import settings
+    from apps.opportunities.models import Opportunity
+    from apps.opportunities.constants import ExtractionStatus
+    from apps.opportunities.services.intelligence import process_opportunity_intelligence
+
+    batch_size = getattr(settings, "OPPORTUNITY_INTELLIGENCE_BATCH_SIZE", 10)
+    # Find opportunities with no intelligence, or PENDING or FAILED
+    pending_opps = (
+        Opportunity.objects.filter(
+            intelligence__isnull=True
+        )
+        .order_by("-created_at")[:batch_size]
+    )
+
+    if not pending_opps.exists():
+        # Check if any have status PENDING
+        pending_opps = (
+            Opportunity.objects.filter(
+                intelligence__extraction_status=ExtractionStatus.PENDING
+            )
+            .order_by("-created_at")[:batch_size]
+        )
+
+    processed = 0
+    for opp in pending_opps:
+        try:
+            process_opportunity_intelligence(opp)
+            processed += 1
+        except Exception as e:
+            logger.error(f"Error in batch intelligence processing for {opp.id}: {e}")
+
+    logger.info(f"Processed {processed} pending opportunities for intelligence.")
+    return {"processed_count": processed}
+

@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Opportunity Inbox — MwohaOS{% endblock %}
+{% block header_title %}Opportunity Intelligence Inbox{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Top Bar / Action -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-slate-900">Opportunity Inbox</h1>
+      <p class="text-xs text-slate-500">Cross-category discovery engine: Jobs, Fellowships, Grants, Accelerators & Competitions.</p>
+    </div>
+    <div class="flex items-center space-x-3">
+      <a href="{% url 'opportunities:sources' %}" class="inline-flex items-center px-3.5 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-md hover:bg-slate-50 shadow-sm">
+        <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Manage Sources
+      </a>
+      <a href="{% url 'opportunities:add' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 shadow-sm">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Ingest URL
+      </a>
+    </div>
+  </div>
+
+  <!-- Search & Facet Filters -->
+  <div class="bg-white rounded-lg border border-slate-200 p-4 shadow-sm space-y-3">
+    <form method="get" class="space-y-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex-1 min-w-[240px]">
+          <input type="text" name="q" value="{{ query }}" placeholder="Search title, organization, or skills..." 
+                 class="w-full rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <select name="type" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Opportunity Types</option>
+            {% for val, lbl in opportunity_types %}
+            <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <select name="sector" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Sectors</option>
+            {% for val, lbl in sectors %}
+            <option value="{{ val }}" {% if selected_sector == val %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <select name="deadline" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="">Any Deadline</option>
+            <option value="upcoming_7_days" {% if deadline_filter == 'upcoming_7_days' %}selected{% endif %}>Next 7 Days</option>
+            <option value="upcoming_30_days" {% if deadline_filter == 'upcoming_30_days' %}selected{% endif %}>Next 30 Days</option>
+            <option value="no_deadline" {% if deadline_filter == 'no_deadline' %}selected{% endif %}>Open / Ongoing</option>
+          </select>
+        </div>
+        <div>
+          <select name="remote" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="">Work Mode</option>
+            <option value="1" {% if remote == '1' %}selected{% endif %}>Remote Only</option>
+            <option value="0" {% if remote == '0' %}selected{% endif %}>Onsite / Hybrid</option>
+          </select>
+        </div>
+        <div>
+          <select name="intel_status" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="">AI Intelligence Status</option>
+            {% for val, lbl in extraction_statuses %}
+            <option value="{{ val }}" {% if selected_intel_status == val %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <input type="text" name="skill" value="{{ selected_skill }}" placeholder="Filter by skill (e.g. Python, GIS)..." 
+                 class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <select name="order" class="rounded-md border-slate-300 text-xs focus:ring-blue-500 focus:border-blue-500">
+            <option value="-posted_date" {% if ordering == '-posted_date' %}selected{% endif %}>Newest Posted</option>
+            <option value="deadline_soonest" {% if ordering == 'deadline_soonest' %}selected{% endif %}>Deadline Soonest</option>
+            <option value="-created_at" {% if ordering == '-created_at' %}selected{% endif %}>Recently Ingested</option>
+          </select>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-slate-900 text-white rounded-md text-xs font-semibold hover:bg-slate-800">
+          Filter
+        </button>
+        {% if query or selected_type or selected_sector or deadline_filter or remote %}
+        <a href="{% url 'opportunities:index' %}" class="text-xs text-slate-500 hover:text-slate-700 underline">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Results Count -->
+  <div class="flex items-center justify-between text-xs text-slate-500">
+    <span>Showing <strong>{{ page_obj.start_index|default:0 }}-{{ page_obj.end_index|default:0 }}</strong> of <strong>{{ total_count }}</strong> opportunities</span>
+  </div>
+
+  <!-- Opportunities List -->
+  <div class="space-y-3">
+    {% for opp in page_obj %}
+    <div class="bg-white rounded-lg border border-slate-200 p-5 shadow-sm hover:border-slate-300 transition">
+      <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div class="space-y-2 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase
+              {% if opp.opportunity_type == 'JOB' %}bg-blue-100 text-blue-800
+              {% elif opp.opportunity_type == 'FELLOWSHIP' %}bg-purple-100 text-purple-800
+              {% elif opp.opportunity_type == 'GRANT' %}bg-emerald-100 text-emerald-800
+              {% elif opp.opportunity_type == 'COMPETITION' %}bg-amber-100 text-amber-800
+              {% elif opp.opportunity_type == 'RESEARCH' %}bg-cyan-100 text-cyan-800
+              {% else %}bg-slate-100 text-slate-800{% endif %}">
+              {{ opp.get_opportunity_type_display }}
+            </span>
+
+            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono text-[10px]">
+              {{ opp.get_sector_display }}
+            </span>
+
+            {% if opp.remote %}
+            <span class="px-2 py-0.5 rounded bg-teal-50 text-teal-700 font-mono text-[10px] border border-teal-200">
+              REMOTE
+            </span>
+            {% endif %}
+
+            {% if opp.status == 'EXPIRED' %}
+            <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-mono text-[10px]">
+              EXPIRED
+            </span>
+            {% endif %}
+
+            {% if opp.intelligence %}
+              {% if opp.intelligence.extraction_status == 'COMPLETED' %}
+              <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-mono text-[10px] border border-emerald-200">
+                INTEL: {{ opp.intelligence.extraction_method }}
+              </span>
+              {% elif opp.intelligence.extraction_status == 'PROCESSING' %}
+              <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-mono text-[10px] animate-pulse">
+                ANALYZING...
+              </span>
+              {% elif opp.intelligence.extraction_status == 'PARTIAL' %}
+              <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-mono text-[10px]">
+                PARTIAL INTEL
+              </span>
+              {% endif %}
+            {% endif %}
+          </div>
+
+          <div>
+            <h2 class="text-base font-bold text-slate-900 hover:text-blue-600 transition">
+              <a href="{% url 'opportunities:detail' opp.pk %}">{{ opp.title }}</a>
+            </h2>
+            <div class="flex items-center space-x-3 text-xs text-slate-500 mt-0.5">
+              <span class="font-semibold text-slate-700">{{ opp.organization }}</span>
+              {% if opp.location %}<span>• {{ opp.location }}</span>{% endif %}
+              {% if opp.compensation %}<span>• {{ opp.compensation }}</span>{% endif %}
+            </div>
+          </div>
+
+          {% if opp.description %}
+          <p class="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+            {{ opp.description|striptags }}
+          </p>
+          {% endif %}
+
+          {% if opp.preferred_skills %}
+          <div class="flex flex-wrap gap-1 pt-1">
+            <span class="text-[10px] text-slate-400 font-mono">Skills:</span>
+            <span class="text-[10px] font-mono text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+              {{ opp.preferred_skills }}
+            </span>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Right Side: Deadline & Actions -->
+        <div class="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-3 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 min-w-[170px]">
+          <div class="text-right text-xs">
+            {% if opp.deadline %}
+            <span class="block text-[11px] text-slate-400 font-mono uppercase">Deadline</span>
+            <span class="font-semibold {% if opp.is_expired %}text-rose-600{% else %}text-slate-800{% endif %}">
+              {{ opp.deadline|date:"d M Y" }}
+            </span>
+            {% else %}
+            <span class="text-slate-400 font-mono text-[11px]">Open / Rolling</span>
+            {% endif %}
+
+            {% if opp.source %}
+            <span class="block text-[10px] text-slate-400 font-mono mt-1">Source: {{ opp.source.name }}</span>
+            {% else %}
+            <span class="block text-[10px] text-slate-400 font-mono mt-1">Source: Manual URL</span>
+            {% endif %}
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <a href="{% url 'opportunities:detail' opp.pk %}" class="px-3 py-1.5 border border-slate-200 text-slate-700 rounded text-xs font-medium hover:bg-slate-50">
+              Details
+            </a>
+            {% if opp.application_url %}
+            <a href="{{ opp.application_url }}" target="_blank" rel="noopener" class="px-3 py-1.5 bg-blue-50 text-blue-700 rounded text-xs font-semibold hover:bg-blue-100">
+              Apply &rarr;
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-lg border border-slate-200 p-12 text-center space-y-3">
+      <div class="w-12 h-12 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+      </div>
+      <h3 class="text-sm font-bold text-slate-700">No opportunities match the criteria.</h3>
+      <p class="text-xs text-slate-500 max-w-sm mx-auto">
+        Poll public feeds via Source Management or ingest a public job/grant URL directly.
+      </p>
+      <div class="flex justify-center space-x-3 pt-2">
+        <a href="{% url 'opportunities:sources' %}" class="px-3.5 py-1.5 bg-slate-800 text-white rounded text-xs font-medium hover:bg-slate-900">Run Sources</a>
+        <a href="{% url 'opportunities:add' %}" class="px-3.5 py-1.5 border border-slate-300 rounded text-xs font-medium hover:bg-slate-50">Ingest URL</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <div class="flex items-center justify-center space-x-2 pt-4">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_sector %}&sector={{ selected_sector }}{% endif %}" class="px-3 py-1.5 border border-slate-200 text-xs rounded text-slate-700 hover:bg-slate-50">Previous</a>
+    {% endif %}
+    <span class="text-xs text-slate-500 font-mono">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_sector %}&sector={{ selected_sector }}{% endif %}" class="px-3 py-1.5 border border-slate-200 text-xs rounded text-slate-700 hover:bg-slate-50">Next</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

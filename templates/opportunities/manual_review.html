@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Review & Save Opportunity — MwohaOS{% endblock %}
+{% block header_title %}Review Extracted Opportunity{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+  <div class="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
+    <div class="border-b border-slate-100 pb-3 mb-5">
+      <h1 class="text-lg font-bold text-slate-900">Review & Refine Extracted Opportunity</h1>
+      <p class="text-xs text-slate-500">
+        Extracted deterministically from <span class="font-mono text-slate-700 font-semibold">{{ target_url }}</span>. Verify and edit fields before saving.
+      </p>
+    </div>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="save_opportunity" value="1">
+
+      {% if form.non_field_errors %}
+      <div class="p-3 rounded bg-rose-50 text-rose-700 text-xs">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Title *</label>
+        {{ form.title }}
+        {% if form.title.errors %}<span class="text-rose-600 text-xs">{{ form.title.errors }}</span>{% endif %}
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Host Organization *</label>
+          {{ form.organization }}
+          {% if form.organization.errors %}<span class="text-rose-600 text-xs">{{ form.organization.errors }}</span>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Opportunity Type *</label>
+          {{ form.opportunity_type }}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Sector *</label>
+          {{ form.sector }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Location</label>
+          {{ form.location }}
+        </div>
+        <div class="flex items-center pt-5">
+          <label class="inline-flex items-center space-x-2 text-xs font-semibold text-slate-700 cursor-pointer">
+            {{ form.remote }}
+            <span>Remote Eligible</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Deadline</label>
+          {{ form.deadline }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Compensation / Funding</label>
+          {{ form.compensation }}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Source URL *</label>
+          {{ form.source_url }}
+          {% if form.source_url.errors %}<span class="text-rose-600 text-xs">{{ form.source_url.errors }}</span>{% endif %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Application URL</label>
+          {{ form.application_url }}
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+        {{ form.description }}
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Eligibility Criteria</label>
+          {{ form.eligibility_text }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Requirements</label>
+          {{ form.requirements }}
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 mb-1">Preferred Skills</label>
+        {{ form.preferred_skills }}
+      </div>
+
+      <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+        <a href="{% url 'opportunities:add' %}" class="px-4 py-2 border border-slate-300 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-50">Back</a>
+        <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 shadow-sm">
+          Save to Opportunity Inbox
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
